@@ -10,17 +10,39 @@ const Register = () => {
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [publickKey, setPublickKey] = useState("");
+  const [privateKey, setPrivateKey] = useState("");
 
   const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
 
-  const submitRegisteration = (e) => {
+  const submitRegisteration = async (e) => {
     setIsLoading(true);
-    register(email, username, password, publickKey);
+    let res = await register(email, username, publickKey);
+
+    if (res.status === 201) {
+      localStorage.setItem("username", username);
+      localStorage.setItem(username, privateKey); // not optimal, can be improved but not sure how
+      navigate('/dashboard')
+    } else {
+      setError(true);
+    }
+  }
+
+  const generateKey = (e) => {
+    let keyPair = window.generateKeyPair();
+
+    setPublickKey(keyPair.publicKey)
+    setPrivateKey(keyPair.privateKey)
+
+    const element = document.createElement("a");
+    const file = new Blob([keyPair.privateKey], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = "ethscrow-private.key";
+    document.body.appendChild(element);
+    element.click();
   }
 
 
@@ -49,20 +71,25 @@ const Register = () => {
                 onChange={e => setUsername(e.target.value)}
               />
 
-              <Input
-                placeholder="Password"
-                type="password"
-                variant='filled'
-                borderRadius='0'
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-              />
               <Tabs size='sm' isFitted variant='enclosed'>
                 <TabList>
-                  <Tab>Upload your own public key</Tab>
                   <Tab>Generate a key pair for me</Tab>
+                  <Tab>Upload your own public key</Tab>
                 </TabList>
                 <TabPanels>
+                  <TabPanel>
+                    <Alert status='warning'>
+                      <InfoIcon />
+                      Make sure not to lose your private key backup!
+                    </Alert>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      width='100%'
+                      disabled={publickKey != "" || username == ""}
+                      onClick={generateKey}
+                    >Generate and Download Backup</Button>
+                  </TabPanel>
                   <TabPanel>
                     <Textarea
                       placeholder='Paste Your Public Key Here...'
@@ -73,22 +100,13 @@ const Register = () => {
                     />
 
                   </TabPanel>
-                  <TabPanel>
-                    <Alert status='warning'>
-                      <InfoIcon />
-                      Make sure not to lose your private key file!
-                    </Alert>
-                    <Button
-                      size='sm'
-                      variant='outline'
-                    >Generate and Download</Button>
-                  </TabPanel>
                 </TabPanels>
               </Tabs>
 
               <Button
                 width='100%'
-                isLoading={isLoading}
+                isLoading={isLoading && !error}
+                disabled={error}
                 loadingText='Registering'
                 variant='flush'
                 onClick={submitRegisteration}

@@ -1,19 +1,51 @@
 import { AddIcon, DownloadIcon, InfoIcon } from "@chakra-ui/icons";
-import { FormControl, Box, Input, Button, Center, Textarea, Tabs, Tab, TabList, TabPanels, TabPanel, Alert } from "@chakra-ui/react";
+import { FormControl, Box, Input, Button, Center, Textarea, Tabs, Tab, TabList, TabPanels, TabPanel, InputGroup, InputLeftAddon } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
+import { login } from "./LoginAPI";
 
 const Login = () => {
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [privateKey, setPrivateKey] = useState("");
 
   const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
 
-  const submitLogin = (e) => {
+  useEffect(() => {
+    let user = localStorage.getItem("username");
+    let key = localStorage.getItem(user);
+    if (!user || !key) {
+      setIsLoading(false);
+      localStorage.clear();
+    } else {
+      setUsername(user);
+      setPrivateKey(key);
+      submitLogin();
+    }
+  }, [])
+
+  const submitLogin = async (e) => {
+    if (!username || !privateKey) return
     setIsLoading(true);
+    let res = await login(username, privateKey);
+    if (res.status !== 200) {
+      setError(true);
+      setIsLoading(false);
+    }
+  }
+
+  const onKeyUpload = (e) => {
+    let file = e.target.files[0];
+    if (file.size === 276) {
+      let reader = new FileReader();
+      reader.readAsText(file, "UTF-8");
+      reader.onload = function (e) {
+        setPrivateKey(e.target.result);
+        console.log(e.target.result);
+      }
+    }
   }
 
   return (
@@ -33,14 +65,18 @@ const Login = () => {
                 onChange={e => setUsername(e.target.value)}
               />
 
-              <Input
-                placeholder="Password"
-                type="password"
-                variant='filled'
-                borderRadius='0'
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-              />
+              <InputGroup>
+                <InputLeftAddon children='Private Key File' />
+                <Input
+                  type="file"
+                  variant='filled'
+                  borderRadius='0'
+                  accept=".key"
+                  onChange={onKeyUpload}
+                  disabled={privateKey != ""}
+                />
+              </InputGroup>
+
 
               <Button
                 width='100%'

@@ -4,6 +4,7 @@ import { Routes, Route, Router } from 'react-router-dom';
 import { Login } from './login';
 import { Dashboard } from './dashboard/Dashboard';
 import { useEffect } from 'react';
+import { Pool } from './pool';
 
 
 function App() {
@@ -28,7 +29,7 @@ function App() {
         <Route path="/" element={< Register />} />
         <Route path="/login" element={< Login />} />
         <Route path="/dashboard" element={< Dashboard />} />
-        <Route path="/pool" element={< Dashboard />} />
+        <Route path="/pool/:PoolId" element={< Pool />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 
