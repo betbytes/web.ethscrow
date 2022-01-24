@@ -1,17 +1,14 @@
 import { API_URL } from "../utils/constants";
 
 export async function register(email, user, pubkey) {
-  let res = await fetch(API_URL + "/register", {
+  let res = await fetch(API_URL + "/user/create", {
     method: "POST",
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email: email, username: user, publickey: pubkey }),
+    credentials: 'include',
+    body: JSON.stringify({ email: (email === "" ? undefined : email), username: user, public_key: pubkey }),
   });
-
-  if (res.status !== 200) {
-    return { status: 400 };
-  }
 
   let resJson = await res.json();
 

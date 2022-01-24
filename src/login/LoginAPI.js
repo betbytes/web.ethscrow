@@ -6,10 +6,11 @@ export async function login(user, privateKey) {
     headers: {
       'Content-Type': 'application/json',
     },
+    credentials: 'same-origin',
   });
 
   if (challengeRes.status !== 200) {
-    return { status: 400 };
+    return { status: challengeRes.status };
   }
 
   let challengeJson = await challengeRes.json();
@@ -23,9 +24,5 @@ export async function login(user, privateKey) {
     body: JSON.stringify(signature),
   });
 
-  if (submitRes.status !== 200) {
-    return { status: 400 };
-  }
-
-  return { status: 200 };
+  return { status: submitRes.status };
 }

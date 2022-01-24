@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StatNumber, Box, Text, Button, Center, SimpleGrid, Menu, MenuButton, MenuItem, MenuList, Stat, StatLabel, StatHelpText, Badge } from "@chakra-ui/react";
 import { ChevronDownIcon, ExternalLinkIcon, CheckIcon, MinusIcon, InfoOutlineIcon, CloseIcon } from "@chakra-ui/icons";
+import { API_URL } from "../utils/constants";
 
 const Dashboard = () => {
 
@@ -26,7 +27,7 @@ const Dashboard = () => {
     }
   ];
 
-  const navigate = useNavigate();
+  let navigate = useNavigate();
 
   const [username, setUsername] = useState("");
 
@@ -37,7 +38,20 @@ const Dashboard = () => {
     } else {
       setUsername(user);
     }
-  }, [])
+  }, []);
+
+  const logout = (e) => {
+    localStorage.clear();
+
+    fetch(API_URL + "/user/logout", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    navigate("/login");
+  };
 
   return (
     <Center justifyContent="center" display="flex" alignItems="center">
@@ -56,6 +70,7 @@ const Dashboard = () => {
               width='100%'
               loadingText='Logging in'
               variant='outline'
+              onClick={logout}
             >
               Logout
             </Button>

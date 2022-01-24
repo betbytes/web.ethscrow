@@ -22,7 +22,6 @@ const Login = () => {
     } else {
       setUsername(user);
       setPrivateKey(key);
-      submitLogin();
     }
   }, [])
 
@@ -30,9 +29,14 @@ const Login = () => {
     if (!username || !privateKey) return
     setIsLoading(true);
     let res = await login(username, privateKey);
+    console.log(res);
     if (res.status !== 200) {
       setError(true);
       setIsLoading(false);
+    } else {
+      localStorage.setItem("username", username);
+      localStorage.setItem(username, privateKey);
+      navigate('/dashboard');
     }
   }
 
@@ -66,7 +70,7 @@ const Login = () => {
               />
 
               <InputGroup>
-                <InputLeftAddon children='Private Key File' />
+                <InputLeftAddon children='Private Key File' borderRadius="0" />
                 <Input
                   type="file"
                   variant='filled'

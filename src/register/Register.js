@@ -10,7 +10,7 @@ const Register = () => {
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [publickKey, setPublickKey] = useState("");
+  const [publicKey, setPublicKey] = useState("");
   const [privateKey, setPrivateKey] = useState("");
 
   const [error, setError] = useState(false);
@@ -20,7 +20,8 @@ const Register = () => {
 
   const submitRegisteration = async (e) => {
     setIsLoading(true);
-    let res = await register(email, username, publickKey);
+    console.log(publicKey);
+    let res = await register(email, username, publicKey);
 
     if (res.status === 201) {
       localStorage.setItem("username", username);
@@ -28,13 +29,14 @@ const Register = () => {
       navigate('/dashboard')
     } else {
       setError(true);
+      setIsLoading(false);
     }
   }
 
   const generateKey = (e) => {
     let keyPair = window.generateKeyPair();
 
-    setPublickKey(keyPair.publicKey)
+    setPublicKey(keyPair.publicKey)
     setPrivateKey(keyPair.privateKey)
 
     const element = document.createElement("a");
@@ -55,20 +57,20 @@ const Register = () => {
 
             <FormControl>
               <Input
-                placeholder="Email"
+                placeholder="Username"
                 variant='filled'
                 borderBottomRightRadius='0'
                 borderBottomLeftRadius='0'
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                value={username}
+                onChange={e => setUsername(e.target.value)}
               />
 
               <Input
-                placeholder="Username"
+                placeholder="Email - Optional"
                 variant='filled'
                 borderRadius='0'
-                value={username}
-                onChange={e => setUsername(e.target.value)}
+                value={email}
+                onChange={e => setEmail(e.target.value)}
               />
 
               <Tabs size='sm' isFitted variant='enclosed'>
@@ -78,7 +80,7 @@ const Register = () => {
                 </TabList>
                 <TabPanels>
                   <TabPanel>
-                    <Alert status='warning'>
+                    <Alert status='warning' fontSize="sm">
                       <InfoIcon />
                       Make sure not to lose your private key backup!
                     </Alert>
@@ -86,18 +88,23 @@ const Register = () => {
                       size='sm'
                       variant='outline'
                       width='100%'
-                      disabled={publickKey != "" || username == ""}
+                      disabled={publicKey != "" || username == ""}
                       onClick={generateKey}
                     >Generate and Download Backup</Button>
                   </TabPanel>
                   <TabPanel>
-                    <Textarea
+                    {/* <Textarea
                       placeholder='Paste Your Public Key Here...'
                       size='sm'
                       resize="none"
-                      onChange={e => setPublickKey(e.target.value)}
-                      value={publickKey}
-                    />
+                      onChange={e => setPublicKey(e.target.value)}
+                      value={publicKey}
+                    /> */}
+
+                    <Alert status='warning'>
+                      <InfoIcon />
+                      Feature coming soon.
+                    </Alert>
 
                   </TabPanel>
                 </TabPanels>
