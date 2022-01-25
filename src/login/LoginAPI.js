@@ -6,7 +6,6 @@ export async function login(user, privateKey) {
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'same-origin',
   });
 
   if (challengeRes.status !== 200) {
@@ -21,6 +20,7 @@ export async function login(user, privateKey) {
     headers: {
       'Content-Type': 'application/json',
     },
+    credentials: 'include',
     body: JSON.stringify(signature),
   });
 

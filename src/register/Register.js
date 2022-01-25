@@ -49,7 +49,7 @@ const Register = () => {
 
 
   return (
-    <Center justifyContent="center" display="flex" alignItems="center">
+    <Center className="vertical-center" justifyContent="center" display="flex" alignItems="center">
       <div>
         <Box borderWidth='1px' m='2' paddingTop='2' borderRadius='lg' alignItems='center'>
           <h1>E(th)scrow Registration</h1>

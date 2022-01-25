@@ -1,8 +1,9 @@
 import { AddIcon, DownloadIcon, InfoIcon } from "@chakra-ui/icons";
-import { FormControl, Box, Input, Button, Center, Textarea, Tabs, Tab, TabList, TabPanels, TabPanel, InputGroup, InputLeftAddon } from "@chakra-ui/react";
+import { FormControl, Box, Input, Button, Center, Text, Tabs, Tab, TabList, TabPanels, TabPanel, InputGroup, InputLeftAddon } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { login } from "./LoginAPI";
+import { useToast } from '@chakra-ui/react'
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -12,6 +13,10 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
+
+  const toast = useToast({
+    position: 'top',
+  });
 
   useEffect(() => {
     let user = localStorage.getItem("username");
@@ -26,17 +31,46 @@ const Login = () => {
   }, [])
 
   const submitLogin = async (e) => {
-    if (!username || !privateKey) return
+    if (!username || !privateKey) {
+      toast({
+        title: 'Please enter a username and upload your key file.',
+        status: 'warning',
+        duration: 1000,
+        isClosable: true,
+      });
+      return;
+    }
     setIsLoading(true);
     let res = await login(username, privateKey);
-    console.log(res);
-    if (res.status !== 200) {
-      setError(true);
-      setIsLoading(false);
-    } else {
-      localStorage.setItem("username", username);
-      localStorage.setItem(username, privateKey);
-      navigate('/dashboard');
+
+    switch (res.status) {
+      case 200:
+        localStorage.setItem("username", username);
+        localStorage.setItem(username, privateKey);
+        navigate('/dashboard');
+        break;
+
+      case 404:
+        toast({
+          title: "User doesn't exist.",
+          status: 'warning',
+          duration: 2000,
+          isClosable: true,
+        });
+        setError(true);
+        setIsLoading(false);
+        break;
+
+      default:
+        toast({
+          title: 'Internal Server Error',
+          status: 'warning',
+          duration: 2000,
+          isClosable: true,
+        });
+        setError(true);
+        setIsLoading(false);
+        break;
     }
   }
 
@@ -47,13 +81,19 @@ const Login = () => {
       reader.readAsText(file, "UTF-8");
       reader.onload = function (e) {
         setPrivateKey(e.target.result);
-        console.log(e.target.result);
       }
+    } else {
+      toast({
+        title: 'Invalid Key File',
+        status: 'warning',
+        duration: 2000,
+        isClosable: true,
+      });
     }
   }
 
   return (
-    <Center justifyContent="center" display="flex" alignItems="center">
+    <Center className="vertical-center" justifyContent="center" display="flex" alignItems="center">
       <div>
         <Box borderWidth='1px' m='2' paddingTop='2' borderRadius='lg' alignItems='center'>
           <h1>E(th)scrow Registration</h1>
@@ -80,7 +120,6 @@ const Login = () => {
                   disabled={privateKey != ""}
                 />
               </InputGroup>
-
 
               <Button
                 width='100%'

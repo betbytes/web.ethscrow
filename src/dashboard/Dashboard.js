@@ -48,6 +48,8 @@ const Dashboard = () => {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
+      withCredentials: true,
     });
 
     navigate("/login");
@@ -56,7 +58,7 @@ const Dashboard = () => {
   return (
     <Center justifyContent="center" display="flex" alignItems="center">
       <div>
-        <Box boxShadow='md' borderWidth='1px' marginBottom='10' marginTop='10' padding='2' borderRadius='lg' alignItems='center'>
+        <Box boxShadow='md' borderWidth='1px' marginBottom='10' marginTop='10' padding='2' paddingLeft='5' borderRadius='lg' alignItems='center'>
           <SimpleGrid
             columns={2}
             spacing='8'
@@ -123,7 +125,7 @@ const Dashboard = () => {
           </SimpleGrid>
         </Box>
 
-        <Box boxShadow='md' borderWidth='1px' marginBottom='10' marginTop='10' padding='2' borderRadius='lg' alignItems='left'>
+        <Box boxShadow='md' borderWidth='1px' marginBottom='5' marginTop='10' padding='2' borderRadius='lg' alignItems='left'>
           <Text textAlign="left" p="2">Invitations
             <Badge ml='1' fontSize='0.8em' colorScheme='green' variant="subtle">
               New
@@ -149,7 +151,6 @@ const Dashboard = () => {
             ))}
           </SimpleGrid>
         </Box>
-
       </div>
     </Center>
   )

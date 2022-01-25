@@ -46,3 +46,17 @@
   font-family: "lora";
   src: local("lora"), url(../public/fonts/lora.ttf) format('opentype');
 }
+
+.footer {
+  position: fixed;
+  bottom: 5px;
+  width: 100%;
+  text-align: center;
+}
+
+.vertical-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
