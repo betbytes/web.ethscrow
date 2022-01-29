@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, MenuButton, MenuItem, MenuList, Alert, AlertIcon, CloseButton, Badge, InputGroup, InputLeftAddon, Input, InputRightAddon } from "@chakra-ui/react";
 import { ChevronDownIcon, ExternalLinkIcon, MinusIcon, InfoOutlineIcon, CloseIcon, CheckCircleIcon } from "@chakra-ui/icons";
+import { submitMessage } from './PoolAPI';
 
-const Pool = () => {
-
-  let { PoolId } = useParams();
+const Pool = (props) => {
 
   const tempData = [
     {
@@ -28,11 +27,33 @@ const Pool = () => {
     }
   ];
 
+  const bet = props.bet;
+  const ws = props.webSocket;
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [setup, setSetup] = useState(false);
   const [lost, setLost] = useState(false);
   const [won, setWon] = useState(false);
+  const [chats, setChats] = useState([]);
+  const [message, setMessage] = useState("");
+  ws.onmessage = (messageEvent) => {
+    let message = JSON.parse(messageEvent.data);
+
+    switch (message.type) {
+      case 0:
+
+        break;
+      case 2:
+        setChats(chats.concat([message.body]));
+        break;
+
+
+      default:
+        break;
+    }
+
+    console.log(message);
+  };
 
   useEffect(() => {
     let user = localStorage.getItem("username");
@@ -40,6 +61,7 @@ const Pool = () => {
       navigate("/login");
     } else {
       setUsername(user);
+      setChats(bet.chats)
     }
   }, [])
 
@@ -53,7 +75,7 @@ const Pool = () => {
             textAlign='center'
             rounded='lg'
           >
-            <h1>Pool {PoolId}</h1>
+            <h1>Pool {bet.id}</h1>
 
             <Button
               size='xs'
@@ -116,17 +138,17 @@ const Pool = () => {
           </Text>
 
           <Box borderWidth='1px' p="2" borderTopRadius="lg">
-            {tempData.map(msg => (
-              <Text fontSize="sm" textAlign={msg.from === username ? "right" : "left"}>
-                {msg.msg}
+            {chats.map(chat => (
+              <Text fontSize="sm" textAlign={chat.from === username ? "right" : "left"}>
+                {chat.message}
               </Text>
             ))}
           </Box>
 
           <InputGroup>
-            <Input variant='outline' placeholder='Message' borderTopRadius="0" fontSize="sm" />
+            <Input variant='outline' placeholder='Message' borderTopRadius="0" fontSize="sm" value={message} onChange={e => setMessage(e.target.value)} />
             <InputRightElement width='4.5rem'>
-              <Button h='1.75rem' size='sm' fontSize="xs">
+              <Button h='1.75rem' size='sm' fontSize="xs" onClick={e => submitMessage(ws, message)}>
                 Send
               </Button>
             </InputRightElement>
