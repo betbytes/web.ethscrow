@@ -3,7 +3,7 @@ import { FormControl, Box, Input, Button, Center, Text, Tabs, Tab, TabList, TabP
 import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { login } from "./LoginAPI";
-import { useToast } from '@chakra-ui/react'
+import { useToast } from '@chakra-ui/react';
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -33,7 +33,7 @@ const Login = () => {
   const submitLogin = async (e) => {
     if (!username || !privateKey) {
       toast({
-        title: 'Please enter a username and upload your key file.',
+        title: 'Please enter a username and locally load your key file.',
         status: 'warning',
         duration: 1000,
         isClosable: true,

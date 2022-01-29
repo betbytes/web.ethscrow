@@ -60,6 +60,7 @@ const Pool = () => {
               width='100%'
               loadingText='Logging in'
               variant='outline'
+              onClick={e => window.close()}
             >
               Exit
             </Button>
@@ -141,8 +142,8 @@ const Pool = () => {
             rounded='lg'
           >
             <Button
-              borderTopLeftRadius='0'
-              borderBottomLeftRadius='0'
+              borderTopRightRadius='0'
+              borderBottomRightRadius='0'
               width='100%'
               disabled={won || lost}
               loadingText='Generating'
@@ -166,7 +167,6 @@ const Pool = () => {
             </Button>
           </SimpleGrid>
         </Box>
-        <Text fontSize="xs">© 2022, E(th)scrow, created by Ahmad Ayubi</Text>
       </div >
     </Center >
   );

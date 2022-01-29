@@ -6,6 +6,7 @@ import { Dashboard } from './dashboard/Dashboard';
 import { useEffect } from 'react';
 import { Pool } from './pool';
 import { Center, Image, Link, Text } from '@chakra-ui/react';
+import PoolState from './pool/PoolState';
 
 
 function App() {
@@ -27,7 +28,7 @@ function App() {
         <Route path="/" element={< Register />} />
         <Route path="/login" element={< Login />} />
         <Route path="/dashboard" element={< Dashboard />} />
-        <Route path="/pool/:PoolId" element={< Pool />} />
+        <Route path="/pool/:PoolId" element={< PoolState />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <div className='footer'>

@@ -1,31 +1,18 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { StatNumber, Box, Text, Button, Center, SimpleGrid, Menu, MenuButton, MenuItem, MenuList, Stat, StatLabel, StatHelpText, Badge } from "@chakra-ui/react";
+import { Link, useNavigate } from 'react-router-dom';
+import { StatNumber, Box, Text, Button, Center, SimpleGrid, Menu, MenuButton, MenuItem, MenuList, Stat, StatLabel, StatHelpText, Badge, useDisclosure, Modal, Flex } from "@chakra-ui/react";
 import { ChevronDownIcon, ExternalLinkIcon, CheckIcon, MinusIcon, InfoOutlineIcon, CloseIcon } from "@chakra-ui/icons";
 import { API_URL } from "../utils/constants";
+import { acceptBet, declineBet, getBets } from './DashboardAPI';
+import NewBetDialog from './NewBetDialog';
 
 const Dashboard = () => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
-  const tempData = [
-    {
-      id: "S543GD134BD",
-      amount: 2.3,
-      with: "bob",
-      date: "Feb 10 2021",
-    },
-    {
-      id: "S543GD13234BD",
-      amount: 0.3,
-      with: "billy",
-      date: "Feb 10 2021",
-    },
-    {
-      id: "S54354GD134BD",
-      amount: 0.543,
-      with: "frank",
-      date: "Feb 10 2021",
-    }
-  ];
+  const [activeBets, setActiveBets] = useState([]);
+  const [indoxBets, setIndoxBets] = useState([]);
+  const [mediatedBets, setMediatedBets] = useState([]);
+  const [sentBets, setSentBets] = useState([]);
 
   let navigate = useNavigate();
 
@@ -37,6 +24,12 @@ const Dashboard = () => {
       navigate("/login");
     } else {
       setUsername(user);
+      getBets().then(bets => {
+        setActiveBets(bets.active ?? []);
+        setIndoxBets(bets.inbox ?? []);
+        setMediatedBets(bets.resolve ?? []);
+        setSentBets(bets.sent ?? []);
+      });
     }
   }, []);
 
@@ -93,6 +86,7 @@ const Dashboard = () => {
               width='100%'
               loadingText='Logging in'
               variant='outline'
+              onClick={onOpen}
             >
               Create a new bet
             </Button>
@@ -104,53 +98,75 @@ const Dashboard = () => {
             textAlign='center'
             rounded='lg'
           >
-            {tempData.map(bet => (
-              <Menu key={bet.id}>
-                <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="outline" height='auto' p='2'>
-                  <Stat textAlign="left">
-                    <StatLabel>Bet with {bet.with}</StatLabel>
-                    <StatNumber fontSize="lg">{bet.amount} eth</StatNumber>
-                    <StatHelpText>As of {bet.date}</StatHelpText>
 
-                  </Stat>
-                </MenuButton>
-                <MenuList>
-                  <MenuItem icon={<ExternalLinkIcon />}>Open</MenuItem>
-                  <MenuItem icon={<CheckIcon />}>I won</MenuItem>
-                  <MenuItem icon={<MinusIcon />}>I lost</MenuItem>
-                  <MenuItem icon={<InfoOutlineIcon />}>Conflict</MenuItem>
-                </MenuList>
-              </Menu>
-            ))}
+            {!activeBets.length ?
+              <Text>No active bets</Text> :
+              activeBets.map(bet => (
+                <Menu key={bet.id}>
+                  <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="outline" height='auto' p='2'>
+                    <Stat textAlign="left">
+                      <StatLabel>{bet.reason}</StatLabel>
+                      <StatNumber fontSize="lg">Bet with {bet.bettor_username === username ? bet.caller_username : bet.bettor_username}</StatNumber>
+                      <StatHelpText isTruncated>Mediated by {bet.mediator_username} • {bet.created_at.split("T")[0]}</StatHelpText>
+
+                    </Stat>
+                  </MenuButton>
+                  <MenuList>
+                    <Link to={"/pool/" + bet.id} target="_blank">
+                      <MenuItem icon={<ExternalLinkIcon />}>Open</MenuItem>
+                    </Link>
+
+                    <MenuItem icon={<CheckIcon />}>I won</MenuItem>
+                    <MenuItem icon={<MinusIcon />}>I lost</MenuItem>
+                    <MenuItem icon={<InfoOutlineIcon />}>Conflict</MenuItem>
+                  </MenuList>
+                </Menu>
+              ))}
+
           </SimpleGrid>
         </Box>
 
-        <Box boxShadow='md' borderWidth='1px' marginBottom='5' marginTop='10' padding='2' borderRadius='lg' alignItems='left'>
-          <Text textAlign="left" p="2">Invitations
-            <Badge ml='1' fontSize='0.8em' colorScheme='green' variant="subtle">
-              New
-            </Badge>
-          </Text>
+        {!indoxBets.length ? <div></div> :
+          <Box boxShadow='md' borderWidth='1px' marginBottom='5' marginTop='10' padding='2' borderRadius='lg' alignItems='left'>
+            <Text textAlign="left" p="2">Invitations
+              <Badge ml='1' fontSize='0.8em' colorScheme='green' variant="subtle">
+                New
+              </Badge>
+            </Text>
 
-          <SimpleGrid
-            spacing='2'
-            paddingTop='5'
-            textAlign='center'
-            rounded='lg'
-          >
-            {tempData.map(bet => (
-              <Menu key={bet.id + "43"}>
-                <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="outline" p='2' textAlign="left">
-                  <Text size="sm">Test</Text>
-                </MenuButton>
-                <MenuList>
-                  <MenuItem icon={<ExternalLinkIcon />}>Open</MenuItem>
-                  <MenuItem icon={<CloseIcon />}>Decline</MenuItem>
-                </MenuList>
-              </Menu>
-            ))}
-          </SimpleGrid>
-        </Box>
+            <SimpleGrid
+              spacing='2'
+              paddingTop='5'
+              textAlign='center'
+              rounded='lg'
+            >
+              {indoxBets.map(bet => (
+
+                <Menu key={bet.id}>
+                  <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="outline" height='auto' p='2' textAlign="left">
+                    <Stat textAlign="left">
+                      <StatLabel isTruncated>{bet.reason}</StatLabel>
+                      <StatNumber fontSize="lg">From {bet.bettor_username}</StatNumber>
+                      <StatHelpText>{bet.created_at}</StatHelpText>
+
+                    </Stat>
+                  </MenuButton>
+                  <MenuList>
+                    <MenuItem icon={<CheckIcon />} onClick={e => acceptBet(bet.id)}>Accept</MenuItem>
+                    <MenuItem icon={<CloseIcon />} onClick={e => declineBet(bet.id)}>Decline</MenuItem>
+                  </MenuList>
+                </Menu>
+              ))}
+
+            </SimpleGrid>
+          </Box>
+        }
+        <Modal
+          isOpen={isOpen}
+          onClose={onClose}
+        ><NewBetDialog onClose={onClose} />
+        </Modal>
+
       </div>
     </Center>
   )
