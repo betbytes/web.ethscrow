@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, MenuButton, MenuItem, MenuList, Alert, AlertIcon, CloseButton, Badge, InputGroup, InputLeftAddon, Input, InputRightAddon } from "@chakra-ui/react";
 import { ChevronDownIcon, ExternalLinkIcon, MinusIcon, InfoOutlineIcon, CloseIcon, CheckCircleIcon } from "@chakra-ui/icons";
-import { MessageType, submitMessage } from './PoolAPI';
+import { generateEscrow, MessageType, submitMessage } from './PoolAPI';
 
 const Pool = (props) => {
 
@@ -19,6 +19,9 @@ const Pool = (props) => {
   const [won, setWon] = useState(false);
   const [chats, setChats] = useState([]);
   const [message, setMessage] = useState("");
+  const [generatingEscrow, setGeneratingEscrow] = useState(false);
+  const [escrowState, setEscrowState] = useState(0);
+  const [initiatedEscrow, setInitiatedEscrow] = useState(false);
 
   ws.onmessage = (messageEvent) => {
     let message = JSON.parse(messageEvent.data);
@@ -43,6 +46,35 @@ const Pool = (props) => {
         const maxScrollTop = scrollHeight - height;
         chatBoxRef.current.scrollTop = maxScrollTop > 0 ? maxScrollTop : 0;
         setMessage("");
+        break;
+      case MessageType.GeneratingEscrow:
+        if (initiatedEscrow) {
+          switch (escrowState) {
+            case 1:
+
+              break;
+            case 3:
+              break;
+            case 5:
+              break;
+            case 7:
+              break;
+          }
+        } else {
+          switch (escrowState) {
+            case 0:
+              setGeneratingEscrow(true);
+              break;
+            case 2:
+              break;
+            case 4:
+              break;
+            case 6:
+              break;
+          }
+        }
+
+        setEscrowState(escrowState + 1);
         break;
 
 
@@ -125,6 +157,13 @@ const Pool = (props) => {
               disabled={setup || (!setup && !otherUserConnected)}
               loadingText='Generating'
               variant='outline'
+              isLoading={generatingEscrow}
+              onClick={e => {
+                setInitiatedEscrow(true);
+                setEscrowState(escrowState + 1);
+                setGeneratingEscrow(true);
+                generateEscrow(ws);
+              }}
             >
               {setup ? <CheckCircleIcon color="green" fontSize="xl" /> : otherUserConnected ? "Generate escrow wallet" : "Other user needs to be connected"}
             </Button>
@@ -146,9 +185,22 @@ const Pool = (props) => {
 
           <InputGroup>
             <InputLeftAddon children={`${150 - message.length}`} />
-            <Input variant='outline' placeholder='Message' borderTopRadius="0" fontSize="sm" value={message} maxLength={150} onChange={e => setMessage(e.target.value)} />
+            <Input
+              variant='outline'
+              placeholder='Message'
+              borderTopRadius="0"
+              fontSize="sm"
+              value={message}
+              maxLength={150}
+              onChange={e => setMessage(e.target.value)}
+              onKeyPress={e => {
+                if (e.key === 'Enter') {
+                  submitMessage(ws, message)
+                }
+              }}
+            />
             <InputRightElement width='4.5rem'>
-              <Button h='1.75rem' size='sm' fontSize="xs" onClick={e => submitMessage(ws, message)}>
+              <Button h='1.75rem' size='sm' fontSize="xs" onClick={e => submitMessage(ws, message)} disabled={message.length <= 0}>
                 Send
               </Button>
             </InputRightElement>

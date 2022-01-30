@@ -4,10 +4,11 @@ export const MessageType = {
   Chat: 2,
   PoolDetails: 3,
   RefreshBalance: 4,
-  Offer: 5,
-  Answer: 6,
-  OfferCandidate: 7,
-  AnswerCandidate: 8,
+  GeneratingEscrow: 5,
+  Offer: 6,
+  Answer: 7,
+  OfferCandidate: 8,
+  AnswerCandidate: 9,
 };
 
 export async function submitMessage(ws, msg) {
@@ -22,4 +23,13 @@ export async function submitMessage(ws, msg) {
       important: true,
     },
   }));
-}  
+}
+
+export async function generateEscrow(ws) {
+  ws.send(JSON.stringify({
+    type: MessageType.GeneratingEscrow,
+    body: {
+      important: true,
+    },
+  }));
+}
