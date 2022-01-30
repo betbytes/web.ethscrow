@@ -8,20 +8,20 @@ import { Pool } from "./Pool";
 const PoolState = () => {
   let { PoolId } = useParams();
   const [isActiveBet, setIsActiveBet] = useState(false);
-  const [bet, setBet] = useState({});
+  const [pool, setPool] = useState({});
 
   const ws = useRef(null);
 
   useEffect(() => {
     ws.current = new WebSocket("ws://" + API_URL.substring(7) + "/broker/" + PoolId);
     ws.current.onopen = () => setIsActiveBet(true);
-    ws.current.onmessage = (msg) => setBet(JSON.parse(msg.data).body);
+    ws.current.onmessage = (msg) => setPool(JSON.parse(msg.data).body);
 
   }, []);
 
   return (
     <div>
-      {isActiveBet && Object.keys(bet).length !== 0 && <Pool webSocket={ws.current} bet={bet} />}
+      {isActiveBet && Object.keys(pool).length !== 0 && <Pool webSocket={ws.current} pool={pool} />}
       {!isActiveBet &&
         <div>
           <Text>You are not part of the pool</Text>

@@ -1,50 +1,48 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, MenuButton, MenuItem, MenuList, Alert, AlertIcon, CloseButton, Badge, InputGroup, InputLeftAddon, Input, InputRightAddon } from "@chakra-ui/react";
 import { ChevronDownIcon, ExternalLinkIcon, MinusIcon, InfoOutlineIcon, CloseIcon, CheckCircleIcon } from "@chakra-ui/icons";
-import { submitMessage } from './PoolAPI';
+import { MessageType, submitMessage } from './PoolAPI';
 
 const Pool = (props) => {
 
-  const tempData = [
-    {
-      id: "S543GD134BD",
-      msg: "Hi",
-      from: "ahmad",
-      date: "Feb 10 2021",
-    },
-    {
-      id: "S543GD13234BD",
-      msg: "How are you",
-      from: "bob",
-      date: "Feb 10 2021",
-    },
-    {
-      id: "S54354GD134BD",
-      msg: "This works",
-      from: "ahmad",
-      date: "Feb 10 2021",
-    }
-  ];
+  const chatBoxRef = useRef(null);
 
-  const bet = props.bet;
+  const pool = props.pool;
+  const bet = pool.pool;
   const ws = props.webSocket;
   const navigate = useNavigate();
+  const [otherUserConnected, setOtherUserConnected] = useState(pool.other_user_connected);
   const [username, setUsername] = useState("");
   const [setup, setSetup] = useState(false);
   const [lost, setLost] = useState(false);
   const [won, setWon] = useState(false);
   const [chats, setChats] = useState([]);
   const [message, setMessage] = useState("");
+
   ws.onmessage = (messageEvent) => {
     let message = JSON.parse(messageEvent.data);
+    let otherUsername = bet.bettor_username === username ? bet.caller_username : bet.bettor_username;
 
     switch (message.type) {
-      case 0:
-
+      case MessageType.Connect:
+        if (message.username === otherUsername) {
+          setOtherUserConnected(true);
+        }
         break;
-      case 2:
+      case MessageType.Disconnect:
+        if (message.username === otherUsername) {
+          setOtherUserConnected(false);
+        }
+        break;
+      case MessageType.Chat:
         setChats(chats.concat([message.body]));
+
+        const scrollHeight = chatBoxRef.current.scrollHeight;
+        const height = chatBoxRef.current.clientHeight;
+        const maxScrollTop = scrollHeight - height;
+        chatBoxRef.current.scrollTop = maxScrollTop > 0 ? maxScrollTop : 0;
+        setMessage("");
         break;
 
 
@@ -60,6 +58,7 @@ const Pool = (props) => {
     if (!user) {
       navigate("/login");
     } else {
+      console.log(pool);
       setUsername(user);
       setChats(bet.chats)
     }
@@ -75,7 +74,7 @@ const Pool = (props) => {
             textAlign='center'
             rounded='lg'
           >
-            <h1>Pool {bet.id}</h1>
+            <Text isTruncated maxWidth='200px'>Pool {bet.id}</Text>
 
             <Button
               size='xs'
@@ -103,13 +102,13 @@ const Pool = (props) => {
             </Box>
             <Box boxShadow='xs' p='2' rounded='md'>
               <Text fontSize="xs" color="gray">Mediator</Text>
-              <Text fontSize="md">Middleman</Text>
-              <Text fontSize="xs" color="red">Offline</Text>
+              <Text fontSize="md">{bet.mediator_username}</Text>
+              <Text fontSize="xs" >-</Text>
             </Box>
             <Box boxShadow='xs' p='2' rounded='md'>
               <Text fontSize="xs" color="gray">Other</Text>
-              <Text fontSize="md">bob</Text>
-              <Text fontSize="xs" color="red">Offline</Text>
+              <Text fontSize="md">{bet.bettor_username === username ? bet.caller_username : bet.bettor_username}</Text>
+              <Text fontSize="xs" color={otherUserConnected ? "green" : "red"}>{otherUserConnected ? "Online" : "Offline"}</Text>
             </Box>
           </SimpleGrid>
         </Box>
@@ -123,11 +122,11 @@ const Pool = (props) => {
               borderTopLeftRadius='0'
               borderBottomLeftRadius='0'
               width='100%'
-              disabled={setup}
+              disabled={setup || (!setup && !otherUserConnected)}
               loadingText='Generating'
               variant='outline'
             >
-              {setup ? <CheckCircleIcon color="green" fontSize="xl" /> : "Generate escrow wallet"}
+              {setup ? <CheckCircleIcon color="green" fontSize="xl" /> : otherUserConnected ? "Generate escrow wallet" : "Other user needs to be connected"}
             </Button>
           </InputGroup>
 
@@ -137,16 +136,17 @@ const Pool = (props) => {
           <Text textAlign="left" p="2">Chat
           </Text>
 
-          <Box borderWidth='1px' p="2" borderTopRadius="lg">
+          <Box ref={chatBoxRef} borderWidth='1px' p="2" borderTopRadius="lg" maxHeight="150px" overflow="auto">
             {chats.map(chat => (
-              <Text fontSize="sm" textAlign={chat.from === username ? "right" : "left"}>
+              <Text key={chat.id} fontSize="sm" textAlign={chat.from_username === username ? "right" : "left"}>
                 {chat.message}
               </Text>
             ))}
           </Box>
 
           <InputGroup>
-            <Input variant='outline' placeholder='Message' borderTopRadius="0" fontSize="sm" value={message} onChange={e => setMessage(e.target.value)} />
+            <InputLeftAddon children={`${150 - message.length}`} />
+            <Input variant='outline' placeholder='Message' borderTopRadius="0" fontSize="sm" value={message} maxLength={150} onChange={e => setMessage(e.target.value)} />
             <InputRightElement width='4.5rem'>
               <Button h='1.75rem' size='sm' fontSize="xs" onClick={e => submitMessage(ws, message)}>
                 Send
