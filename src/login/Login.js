@@ -8,6 +8,7 @@ import { useToast } from '@chakra-ui/react';
 const Login = () => {
   const [username, setUsername] = useState("");
   const [privateKey, setPrivateKey] = useState("");
+  const [encPrivateKey, setEncPrivateKey] = useState("");
 
   const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,17 +22,19 @@ const Login = () => {
   useEffect(() => {
     let user = localStorage.getItem("username");
     let key = localStorage.getItem(user);
-    if (!user || !key) {
+    let encKey = localStorage.getItem(`enc-${user}`);
+    if (!user || !key || !encKey) {
       setIsLoading(false);
       localStorage.clear();
     } else {
       setUsername(user);
       setPrivateKey(key);
+      setEncPrivateKey(encKey);
     }
   }, [])
 
   const submitLogin = async (e) => {
-    if (!username || !privateKey) {
+    if (!username || !privateKey || !encPrivateKey) {
       toast({
         title: 'Please enter a username and locally load your key file.',
         status: 'warning',
@@ -47,6 +50,7 @@ const Login = () => {
       case 200:
         localStorage.setItem("username", username);
         localStorage.setItem(username, privateKey);
+        localStorage.setItem(`enc-${username}`, encPrivateKey);
         navigate('/dashboard');
         break;
 
@@ -80,7 +84,9 @@ const Login = () => {
       let reader = new FileReader();
       reader.readAsText(file, "UTF-8");
       reader.onload = function (e) {
-        setPrivateKey(e.target.result);
+        let keys = e.target.result.split("-")
+        setPrivateKey(keys[0]);
+        setEncPrivateKey(keys[1]);
       }
     } else {
       toast({

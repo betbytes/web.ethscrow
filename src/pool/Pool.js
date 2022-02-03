@@ -6,8 +6,18 @@ import { generateEscrow, MessageType, submitMessage } from './PoolAPI';
 
 const Pool = (props) => {
 
+  let p2p = new RTCPeerConnection({
+    iceServers: [     // Information about ICE servers - Use your own!
+      {
+        urls: "stun:stun.stunprotocol.org"
+      }
+    ],
+  });
+  const p2pChannel = p2p.createDataChannel("escrowChannel");
+  p2pChannel.onmessage = function (event) {
+    console.log(event.data);
+  };
   const chatBoxRef = useRef(null);
-
   const pool = props.pool;
   const bet = pool.pool;
   const ws = props.webSocket;
@@ -47,6 +57,10 @@ const Pool = (props) => {
         chatBoxRef.current.scrollTop = maxScrollTop > 0 ? maxScrollTop : 0;
         setMessage("");
         break;
+      case MessageType.Offer:
+      case MessageType.Answer:
+      case MessageType.OfferCandidate:
+      case MessageType.AnswerCandidate:
       case MessageType.GeneratingEscrow:
         if (initiatedEscrow) {
           switch (escrowState) {

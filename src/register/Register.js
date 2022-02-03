@@ -12,6 +12,8 @@ const Register = () => {
   const [email, setEmail] = useState("");
   const [publicKey, setPublicKey] = useState("");
   const [privateKey, setPrivateKey] = useState("");
+  const [encPublicKey, setEncPublicKey] = useState("");
+  const [encPrivateKey, setEncPrivateKey] = useState("");
 
   const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,11 +23,12 @@ const Register = () => {
   const submitRegisteration = async (e) => {
     setIsLoading(true);
     console.log(publicKey);
-    let res = await register(email, username, publicKey);
+    let res = await register(email, username, publicKey, encPublicKey);
 
     if (res.status === 201) {
       localStorage.setItem("username", username);
       localStorage.setItem(username, privateKey); // not optimal, can be improved but not sure how
+      localStorage.setItem(`enc-${username}`, encPrivateKey);
       navigate('/dashboard')
     } else {
       setError(true);
@@ -35,14 +38,17 @@ const Register = () => {
 
   const generateKey = (e) => {
     let keyPair = window.generateKeyPair();
+    let encKeyPair = window.generateKeyPair();
 
     setPublicKey(keyPair.publicKey)
     setPrivateKey(keyPair.privateKey)
+    setEncPublicKey(encKeyPair.publicKey);
+    setEncPrivateKey(encKeyPair.privateKey);
 
     const element = document.createElement("a");
-    const file = new Blob([keyPair.privateKey], { type: 'text/plain' });
+    const file = new Blob([`${keyPair.privateKey}-${encKeyPair.privateKey}`], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
-    element.download = "ethscrow-private.key";
+    element.download = `ethscrow-${username || "private"}.key`;
     document.body.appendChild(element);
     element.click();
   }

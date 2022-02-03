@@ -33,3 +33,33 @@ export async function generateEscrow(ws) {
     },
   }));
 }
+
+export async function createOffer(p2p) {
+  let offer = await p2p.createOffer();
+  await p2p.setLocalDescription(offer);
+  return p2p.localDescription;
+}
+
+export async function createAnswer(p2p, sdp, initialized) {
+  let desc = new RTCSessionDescription(sdp);
+  await p2p.setRemoteDescription(desc);
+  if (!initialized) {
+    let answer = await p2p.createAnswer();
+    await p2p.setLocalDescription(answer);
+    return p2p.localDescription;
+  }
+}
+
+export function handleICECandidateEvent(event, ws) {
+  ws.send(JSON.stringify({
+    type: MessageType.OfferCandidate,
+    body: {
+      sdp: event.candidate,
+    },
+  }))
+}
+
+export function handleICEAnswerEvent(sdp, p2p) {
+  var candidate = new RTCIceCandidate(sdp);
+  await p2p.addIceCandidate(candidate);
+}
