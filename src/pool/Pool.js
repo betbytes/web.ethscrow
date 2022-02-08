@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, Stat, StatLabel, StatHelpText, Tooltip, Heading, CloseButton, Badge, InputGroup, InputLeftAddon, Input, InputRightAddon } from "@chakra-ui/react";
-import { ChevronDownIcon, ExternalLinkIcon, MinusIcon, InfoOutlineIcon, CloseIcon, CheckCircleIcon, LockIcon } from "@chakra-ui/icons";
+import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, Stat, StatLabel, StatHelpText, Tooltip, Modal, ModalOverlay, HStack, useDisclosure, InputGroup, InputLeftAddon, ModalBody, Input, ModalContent, Skeleton, ModalHeader, ModalCloseButton, useToast } from "@chakra-ui/react";
+import { ChevronDownIcon, ExternalLinkIcon, MinusIcon, InfoOutlineIcon, CloseIcon, CheckCircleIcon, LockIcon, DownloadIcon, ArrowUpIcon, CheckIcon } from "@chakra-ui/icons";
 import { createAnswer, createOffer, generateEscrow, handleICEAnswerEvent, handleICECandidateEvent, MessageType, setupP2P, submitMessage } from './PoolAPI';
 
 const Pool = (props) => {
@@ -21,6 +21,11 @@ const Pool = (props) => {
     console.log(event);
   };
 
+  const toast = useToast({
+    position: 'top',
+  });
+
+  const [loaded, setLoaded] = useState(false);
   const chatBoxRef = useRef(null);
   const pool = props.pool;
   const bet = pool.pool;
@@ -43,6 +48,7 @@ const Pool = (props) => {
   const [balance, setBalance] = useState((0).toFixed(8));
   const [balanceUpdatedAt, setBalanceUpdatedAt] = useState(new Date());
   const [updatingBalance, setUpdatingBalance] = useState(false);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
 
   ws.onmessage = async (messageEvent) => {
@@ -100,6 +106,8 @@ const Pool = (props) => {
         bet.initialized = true;
         setGeneratingEscrow(false);
         setAddress(bet.address);
+        localStorage.setItem(address, privateThresholdKey);
+        onOpen();
         break;
       case MessageType.Offer:
         setGeneratingEscrow(true);
@@ -126,6 +134,26 @@ const Pool = (props) => {
     console.log(message);
   };
 
+  const savePrivateThreshold = (e) => {
+    console.log(privateThresholdKey);
+    const element = document.createElement("a");
+    const file = new Blob([privateThresholdKey], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = `ethscrow-${bet.id}-${username}.key`;
+    document.body.appendChild(element);
+    element.click();
+  }
+
+  const uploadPrivateThreshold = (e) => {
+    let file = e.target.files[0];
+    let reader = new FileReader();
+    reader.readAsText(file, "UTF-8");
+    reader.onload = function (e) {
+      setPrivateThresholdKey(e.target.result);
+      localStorage.setItem(address, e.target.result);
+    }
+  }
+
   useEffect(() => {
     let user = localStorage.getItem("username");
     if (!user) {
@@ -135,6 +163,10 @@ const Pool = (props) => {
       setUsername(user);
       setChats(bet.chats)
       setAddress(bet.address || "");
+      if (bet.address) {
+        setPrivateThresholdKey(localStorage.getItem(address));
+      }
+      setLoaded(true);
     }
   }, [])
 
@@ -165,171 +197,222 @@ const Pool = (props) => {
           </SimpleGrid>
         </Box>
 
-        <Box boxShadow='md' borderWidth='1px' marginBottom='5' marginTop='10' padding='2' borderRadius='lg' alignItems='center'>
-          <SimpleGrid
-            columns={3}
-            spacing='8'
-            textAlign='center'
-            rounded='lg'
-          >
-            <Box boxShadow='xs' p='2' rounded='md'>
-              <Text fontSize="xs" color="gray">You</Text>
-              <Text fontSize="md">{username}</Text>
-              <Text fontSize="xs" color="green">Online</Text>
-            </Box>
-            <Box boxShadow='xs' p='2' rounded='md'>
-              <Text fontSize="xs" color="gray">Mediator</Text>
-              <Text fontSize="md">{bet.mediator_username}</Text>
-              <Text fontSize="xs" >-</Text>
-            </Box>
-            <Box boxShadow='xs' p='2' rounded='md'>
-              <Text fontSize="xs" color="gray">Other</Text>
-              <Text fontSize="md">{bet.bettor_username === username ? bet.caller_username : bet.bettor_username}</Text>
-              <Text fontSize="xs" color={otherUserConnected ? "green" : "red"}>{otherUserConnected ? "Online" : "Offline"}</Text>
-            </Box>
-          </SimpleGrid>
-        </Box>
+        <Skeleton isLoaded={loaded}>
+          <Box boxShadow='md' borderWidth='1px' marginBottom='5' marginTop='10' padding='2' borderRadius='lg' alignItems='center'>
+            <SimpleGrid
+              columns={3}
+              spacing='8'
+              textAlign='center'
+              rounded='lg'
+            >
+              <Box boxShadow='xs' p='2' rounded='md'>
+                <Text fontSize="xs" color="gray">You</Text>
+                <Text fontSize="md">{username}</Text>
+                <Text fontSize="xs" color="green">Online</Text>
+              </Box>
+              <Box boxShadow='xs' p='2' rounded='md'>
+                <Text fontSize="xs" color="gray">Mediator</Text>
+                <Text fontSize="md">{bet.mediator_username}</Text>
+                <Text fontSize="xs" >-</Text>
+              </Box>
+              <Box boxShadow='xs' p='2' rounded='md'>
+                <Text fontSize="xs" color="gray">Other</Text>
+                <Text fontSize="md">{bet.bettor_username === username ? bet.caller_username : bet.bettor_username}</Text>
+                <Text fontSize="xs" color={otherUserConnected ? "green" : "red"}>{otherUserConnected ? "Online" : "Offline"}</Text>
+              </Box>
+            </SimpleGrid>
+          </Box>
+        </Skeleton>
 
-        {address === "" ?
-          <Box boxShadow='md' borderWidth='1px' marginBottom='5' padding='2' borderRadius='lg' textAlign="left">
+        <Skeleton isLoaded={loaded}>
+          {address === "" ?
+            <Box boxShadow='md' borderWidth='1px' marginBottom='5' padding='2' borderRadius='lg' textAlign="left">
+
+              <InputGroup>
+                <InputLeftAddon children='Step 1' />
+
+                <Button
+                  borderTopLeftRadius='0'
+                  borderBottomLeftRadius='0'
+                  width='100%'
+                  disabled={address !== "" || !otherUserConnected}
+                  loadingText='Generating'
+                  variant='outline'
+                  isLoading={generatingEscrow}
+                  onClick={async e => {
+                    setInitiatedEscrow(true);
+                    setGeneratingEscrow(true);
+
+                    let thresh = window.generateThresholdKey();
+                    setPrivateThresholdKey(thresh.privateShare);
+                    setThresholdX(thresh.publicShareX);
+                    setThresholdY(thresh.publicShareY);
+
+                    ws.send(JSON.stringify({
+                      type: MessageType.GeneratingEscrow,
+                      body: {
+                        x: thresh.publicShareX,
+                        y: thresh.publicShareY,
+                      },
+                    }));
+
+                    //let offer = await createOffer(p2p);
+                    //await setupP2P(ws, MessageType.Offer, offer);
+                  }}
+                >
+                  {address !== "" ? <CheckCircleIcon color="green" fontSize="xl" /> : otherUserConnected ? "Generate escrow wallet" : "Other user needs to be connected"}
+                </Button>
+              </InputGroup>
+
+            </Box> :
+            <Box boxShadow='md' borderWidth='1px' marginBottom='5' padding='2' borderRadius='lg' textAlign="left">
+              <HStack spacing='5px' marginBottom="10px">
+                <Button
+                  size='xs'
+                  width='75%'
+                  isLoading={updatingBalance}
+                  loadingText='Updating balance'
+                  variant='outline'
+                  onClick={e => {
+                    setUpdatingBalance(true);
+                    ws.send(JSON.stringify({
+                      type: MessageType.RefreshBalance,
+                    }));
+                  }
+                  }
+                >
+                  Refresh balance
+                </Button>
+
+                {!privateThresholdKey ?
+                  <input type="file" name="file" onChange={uploadPrivateThreshold} width="25%" /> :
+                  <Button
+                    size='xs'
+                    width='25%'
+                    isLoading={updatingBalance}
+                    loadingText='Updating balance'
+                    variant='outline'
+                    onClick={savePrivateThreshold}
+                  >
+                    <DownloadIcon />
+                  </Button>}
+              </HStack>
+
+              <Stat>
+                <StatNumber>{balance} eth
+                  <Tooltip label='Balance is secured in an escrow wallet, noone on planet earth knows the secret key until the bet is resolved.'>
+                    <LockIcon fontSize="md" color="steelblue" marginLeft="10px" />
+                  </Tooltip>
+                </StatNumber>
+                <StatLabel>{address}</StatLabel>
+                <StatHelpText fontSize="xs">Last Updated {balanceUpdatedAt.toUTCString()}</StatHelpText>
+              </Stat>
+            </Box>
+          }
+        </Skeleton>
+
+        <Modal isOpen={isOpen} onClose={onClose}>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader><CheckIcon color="green" marginRight="15px" />Escrow Wallet Generated</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <Text>Transfer To </Text>
+              <Text>{address}</Text>
+              <Button
+                size='xs'
+                width='100%'
+                variant='outline'
+                onClick={() => {
+                  navigator.clipboard.writeText(address);
+                  toast({
+                    title: 'Copied To Clipboard.',
+                    status: 'success',
+                    duration: 500,
+                    isClosable: true,
+                  });
+                }}
+              >
+                Copy To Clipboard
+              </Button>
+            </ModalBody>
+          </ModalContent>
+        </Modal>
+
+        <Skeleton isLoaded={loaded}>
+          <Box boxShadow='md' borderWidth='1px' marginBottom='5' padding='2' borderRadius='lg' alignItems='left'>
+            <Text textAlign="left" p="2">Chat
+            </Text>
+
+            <Box ref={chatBoxRef} borderWidth='1px' p="2" borderTopRadius="lg" maxHeight="150px" overflow="auto">
+              {chats.map(chat => (
+                <Text key={chat.id} fontSize="sm" textAlign={chat.from_username === username ? "right" : "left"}>
+                  {chat.message}
+                </Text>
+              ))}
+            </Box>
 
             <InputGroup>
-              <InputLeftAddon children='Step 1' />
+              <InputLeftAddon children={`${150 - message.length}`} />
+              <Input
+                variant='outline'
+                placeholder='Message'
+                borderTopRadius="0"
+                fontSize="sm"
+                value={message}
+                maxLength={150}
+                onChange={e => setMessage(e.target.value)}
+                onKeyPress={e => {
+                  if (e.key === 'Enter') {
+                    submitMessage(ws, message)
+                  }
+                }}
+              />
+              <InputRightElement width='4.5rem'>
+                <Button h='1.75rem' size='sm' fontSize="xs" onClick={e => submitMessage(ws, message)} disabled={message.length <= 0}>
+                  Send
+                </Button>
+              </InputRightElement>
+            </InputGroup>
 
+          </Box>
+        </Skeleton>
+
+        <Skeleton isLoaded={loaded}>
+          <Box boxShadow='md' borderWidth='1px' marginBottom='5' padding='2' borderRadius='lg' textAlign="left">
+            <SimpleGrid
+              columns={2}
+              spacing='2'
+              textAlign='center'
+              rounded='lg'
+            >
+              <Button
+                borderTopRightRadius='0'
+                borderBottomRightRadius='0'
+                width='100%'
+                disabled={won || lost}
+                loadingText='Generating'
+                variant='outline'
+                backgroundColor={won ? "green" : "white"}
+                textColor={won ? "white" : "black"}
+              >
+                I won
+              </Button>
               <Button
                 borderTopLeftRadius='0'
                 borderBottomLeftRadius='0'
                 width='100%'
-                disabled={address !== "" || !otherUserConnected}
+                disabled={won || lost}
                 loadingText='Generating'
                 variant='outline'
-                isLoading={generatingEscrow}
-                onClick={async e => {
-                  setInitiatedEscrow(true);
-                  setGeneratingEscrow(true);
-
-                  let thresh = window.generateThresholdKey();
-                  setPrivateThresholdKey(thresh.privateShare);
-                  setThresholdX(thresh.publicShareX);
-                  setThresholdY(thresh.publicShareY);
-
-                  ws.send(JSON.stringify({
-                    type: MessageType.GeneratingEscrow,
-                    body: {
-                      x: thresh.publicShareX,
-                      y: thresh.publicShareY,
-                    },
-                  }));
-
-                  //let offer = await createOffer(p2p);
-                  //await setupP2P(ws, MessageType.Offer, offer);
-                }}
+                backgroundColor={lost ? "red" : "white"}
+                textColor={lost ? "white" : "black"}
               >
-                {address !== "" ? <CheckCircleIcon color="green" fontSize="xl" /> : otherUserConnected ? "Generate escrow wallet" : "Other user needs to be connected"}
+                I lost
               </Button>
-            </InputGroup>
-
-          </Box> :
-          <Box boxShadow='md' borderWidth='1px' marginBottom='5' padding='2' borderRadius='lg' textAlign="left">
-            <Button
-              size='xs'
-              width='100%'
-              isLoading={updatingBalance}
-              loadingText='Updating balance'
-              variant='outline'
-              onClick={e => {
-                setUpdatingBalance(true);
-                ws.send(JSON.stringify({
-                  type: MessageType.RefreshBalance,
-                }));
-              }
-              }
-              marginBottom="10px"
-            >
-              Refresh balance
-            </Button>
-            <Stat>
-              <StatNumber>{balance} eth
-                <Tooltip label='Balance is secured in an escrow wallet, noone on planet earth knows the secret key until the bet is resolved.'>
-                  <LockIcon fontSize="md" color="steelblue" marginLeft="10px" />
-                </Tooltip>
-              </StatNumber>
-              <StatLabel>{address}</StatLabel>
-              <StatHelpText fontSize="xs">Last Updated {balanceUpdatedAt.toUTCString()}</StatHelpText>
-            </Stat>
+            </SimpleGrid>
           </Box>
-        }
-
-        <Box boxShadow='md' borderWidth='1px' marginBottom='5' padding='2' borderRadius='lg' alignItems='left'>
-          <Text textAlign="left" p="2">Chat
-          </Text>
-
-          <Box ref={chatBoxRef} borderWidth='1px' p="2" borderTopRadius="lg" maxHeight="150px" overflow="auto">
-            {chats.map(chat => (
-              <Text key={chat.id} fontSize="sm" textAlign={chat.from_username === username ? "right" : "left"}>
-                {chat.message}
-              </Text>
-            ))}
-          </Box>
-
-          <InputGroup>
-            <InputLeftAddon children={`${150 - message.length}`} />
-            <Input
-              variant='outline'
-              placeholder='Message'
-              borderTopRadius="0"
-              fontSize="sm"
-              value={message}
-              maxLength={150}
-              onChange={e => setMessage(e.target.value)}
-              onKeyPress={e => {
-                if (e.key === 'Enter') {
-                  submitMessage(ws, message)
-                }
-              }}
-            />
-            <InputRightElement width='4.5rem'>
-              <Button h='1.75rem' size='sm' fontSize="xs" onClick={e => submitMessage(ws, message)} disabled={message.length <= 0}>
-                Send
-              </Button>
-            </InputRightElement>
-          </InputGroup>
-
-        </Box>
-
-        <Box boxShadow='md' borderWidth='1px' marginBottom='5' padding='2' borderRadius='lg' textAlign="left">
-          <SimpleGrid
-            columns={2}
-            spacing='2'
-            textAlign='center'
-            rounded='lg'
-          >
-            <Button
-              borderTopRightRadius='0'
-              borderBottomRightRadius='0'
-              width='100%'
-              disabled={won || lost}
-              loadingText='Generating'
-              variant='outline'
-              backgroundColor={won ? "green" : "white"}
-              textColor={won ? "white" : "black"}
-            >
-              I won
-            </Button>
-            <Button
-              borderTopLeftRadius='0'
-              borderBottomLeftRadius='0'
-              width='100%'
-              disabled={won || lost}
-              loadingText='Generating'
-              variant='outline'
-              backgroundColor={lost ? "red" : "white"}
-              textColor={lost ? "white" : "black"}
-            >
-              I lost
-            </Button>
-          </SimpleGrid>
-        </Box>
+        </Skeleton>
       </div >
     </Center >
   );
