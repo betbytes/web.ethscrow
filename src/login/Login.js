@@ -1,5 +1,5 @@
 import { AddIcon, DownloadIcon, InfoIcon } from "@chakra-ui/icons";
-import { FormControl, Box, Input, Button, Center, Text, Tabs, Tab, TabList, TabPanels, TabPanel, InputGroup, InputLeftAddon } from "@chakra-ui/react";
+import { FormControl, Box, Input, Button, Center, Heading, Tabs, Tab, TabList, TabPanels, TabPanel, InputGroup, InputLeftAddon } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { login } from "./LoginAPI";
@@ -80,7 +80,7 @@ const Login = () => {
 
   const onKeyUpload = (e) => {
     let file = e.target.files[0];
-    if (file.size === 276) {
+    if (file.size === 553) {
       let reader = new FileReader();
       reader.readAsText(file, "UTF-8");
       reader.onload = function (e) {
@@ -102,7 +102,9 @@ const Login = () => {
     <Center className="vertical-center" justifyContent="center" display="flex" alignItems="center">
       <div>
         <Box borderWidth='1px' m='2' paddingTop='2' borderRadius='lg' alignItems='center'>
-          <h1>E(th)scrow Registration</h1>
+          <h1>
+            E(th)scrow Registration
+          </h1>
           <Box maxW='sm' borderWidth='1px' m='2' borderRadius='lg' alignItems='center'>
 
             <FormControl>

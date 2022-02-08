@@ -5,7 +5,7 @@ import { Login } from './login';
 import { Dashboard } from './dashboard/Dashboard';
 import { useEffect } from 'react';
 import { Pool } from './pool';
-import { Center, Image, Link, Text } from '@chakra-ui/react';
+import { Center, Image, Link, Text, Heading } from '@chakra-ui/react';
 import PoolState from './pool/PoolState';
 
 
@@ -23,6 +23,9 @@ function App() {
 
   return (
     <div className="App">
+      <Heading size='sm' width="100%" backgroundColor="teal" padding="5px" color="white" >
+        e(th)scrow
+      </Heading>
 
       <Routes>
         <Route path="/" element={< Register />} />

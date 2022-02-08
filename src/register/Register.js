@@ -1,5 +1,5 @@
 import { AddIcon, DownloadIcon, InfoIcon } from "@chakra-ui/icons";
-import { FormControl, Box, Input, Button, Center, Textarea, Tabs, Tab, TabList, TabPanels, TabPanel, Alert } from "@chakra-ui/react";
+import { FormControl, Box, Input, Button, Center, Heading, Tabs, Tab, TabList, TabPanels, TabPanel, Alert } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import './Register.css';
 import { register } from "./RegisterAPI";

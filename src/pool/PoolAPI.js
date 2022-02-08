@@ -9,6 +9,7 @@ export const MessageType = {
   Answer: 7,
   OfferCandidate: 8,
   AnswerCandidate: 9,
+  InitializePool: 10,
 };
 
 export async function submitMessage(ws, msg) {
@@ -21,6 +22,15 @@ export async function submitMessage(ws, msg) {
     body: {
       message: msg,
       important: true,
+    },
+  }));
+}
+
+export async function setupP2P(ws, messageType, data) {
+  ws.send(JSON.stringify({
+    type: messageType,
+    body: {
+      data: data
     },
   }));
 }
@@ -52,14 +62,18 @@ export async function createAnswer(p2p, sdp, initialized) {
 
 export function handleICECandidateEvent(event, ws) {
   ws.send(JSON.stringify({
-    type: MessageType.OfferCandidate,
+    type: MessageType.AnswerCandidate,
     body: {
-      sdp: event.candidate,
+      data: event.candidate,
     },
   }))
 }
 
-export function handleICEAnswerEvent(sdp, p2p) {
-  var candidate = new RTCIceCandidate(sdp);
-  await p2p.addIceCandidate(candidate);
+export async function handleICEAnswerEvent(sdp, p2p) {
+  if (sdp && sdp.candidate) {
+    try {
+      var candidate = new RTCIceCandidate(sdp);
+      await p2p.addIceCandidate(candidate);
+    } catch (e) { }
+  }
 }

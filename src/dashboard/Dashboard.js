@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { StatNumber, Box, Text, Button, Center, SimpleGrid, Menu, MenuButton, MenuItem, MenuList, Stat, StatLabel, StatHelpText, Badge, useDisclosure, Modal, Flex } from "@chakra-ui/react";
+import { StatNumber, Box, Text, Button, Center, SimpleGrid, Menu, MenuButton, MenuItem, MenuList, Stat, StatLabel, StatHelpText, Badge, useDisclosure, Modal, Heading } from "@chakra-ui/react";
 import { ChevronDownIcon, ExternalLinkIcon, CheckIcon, MinusIcon, InfoOutlineIcon, CloseIcon } from "@chakra-ui/icons";
 import { API_URL } from "../utils/constants";
 import { acceptBet, declineBet, getBets } from './DashboardAPI';
@@ -49,6 +49,7 @@ const Dashboard = () => {
   };
 
   return (
+
     <Center justifyContent="center" display="flex" alignItems="center">
       <div>
         <Box boxShadow='md' borderWidth='1px' marginBottom='10' marginTop='10' padding='2' paddingLeft='5' borderRadius='lg' alignItems='center'>

@@ -1,22 +1,26 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, MenuButton, MenuItem, MenuList, Alert, AlertIcon, CloseButton, Badge, InputGroup, InputLeftAddon, Input, InputRightAddon } from "@chakra-ui/react";
-import { ChevronDownIcon, ExternalLinkIcon, MinusIcon, InfoOutlineIcon, CloseIcon, CheckCircleIcon } from "@chakra-ui/icons";
-import { generateEscrow, MessageType, submitMessage } from './PoolAPI';
+import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, Stat, StatLabel, StatHelpText, Tooltip, Heading, CloseButton, Badge, InputGroup, InputLeftAddon, Input, InputRightAddon } from "@chakra-ui/react";
+import { ChevronDownIcon, ExternalLinkIcon, MinusIcon, InfoOutlineIcon, CloseIcon, CheckCircleIcon, LockIcon } from "@chakra-ui/icons";
+import { createAnswer, createOffer, generateEscrow, handleICEAnswerEvent, handleICECandidateEvent, MessageType, setupP2P, submitMessage } from './PoolAPI';
 
 const Pool = (props) => {
 
-  let p2p = new RTCPeerConnection({
+  const p2p = new RTCPeerConnection({
     iceServers: [     // Information about ICE servers - Use your own!
       {
-        urls: "stun:stun.stunprotocol.org"
+        urls: "stun:stun.l.google.com:19302"
       }
     ],
   });
   const p2pChannel = p2p.createDataChannel("escrowChannel");
+  p2pChannel.onopen = e => {
+    console.log(e);
+  }
   p2pChannel.onmessage = function (event) {
-    console.log(event.data);
+    console.log(event);
   };
+
   const chatBoxRef = useRef(null);
   const pool = props.pool;
   const bet = pool.pool;
@@ -24,16 +28,24 @@ const Pool = (props) => {
   const navigate = useNavigate();
   const [otherUserConnected, setOtherUserConnected] = useState(pool.other_user_connected);
   const [username, setUsername] = useState("");
-  const [setup, setSetup] = useState(false);
   const [lost, setLost] = useState(false);
   const [won, setWon] = useState(false);
   const [chats, setChats] = useState([]);
   const [message, setMessage] = useState("");
   const [generatingEscrow, setGeneratingEscrow] = useState(false);
-  const [escrowState, setEscrowState] = useState(0);
   const [initiatedEscrow, setInitiatedEscrow] = useState(false);
+  const [iceSet, setIceSet] = useState(false);
+  p2p.onicecandidate = e => handleICECandidateEvent(e, ws);
+  const [privateThresholdKey, setPrivateThresholdKey] = useState("");
+  const [thresholdX, setThresholdX] = useState("");
+  const [thresholdY, setThresholdY] = useState("");
+  const [address, setAddress] = useState("");
+  const [balance, setBalance] = useState((0).toFixed(8));
+  const [balanceUpdatedAt, setBalanceUpdatedAt] = useState(new Date());
+  const [updatingBalance, setUpdatingBalance] = useState(false);
 
-  ws.onmessage = (messageEvent) => {
+
+  ws.onmessage = async (messageEvent) => {
     let message = JSON.parse(messageEvent.data);
     let otherUsername = bet.bettor_username === username ? bet.caller_username : bet.bettor_username;
 
@@ -57,40 +69,55 @@ const Pool = (props) => {
         chatBoxRef.current.scrollTop = maxScrollTop > 0 ? maxScrollTop : 0;
         setMessage("");
         break;
+      case MessageType.GeneratingEscrow:
+        let bobX = message.body.x, bobY = message.body.y;
+        if (initiatedEscrow) {
+          let address = window.generateEscrowAddress(thresholdX, thresholdY, bobX, bobY);
+          ws.send(JSON.stringify({
+            type: MessageType.InitializePool,
+            body: {
+              address: address,
+            },
+          }));
+        } else {
+          setGeneratingEscrow(true);
+          let thresh = window.generateThresholdKey();
+          setPrivateThresholdKey(thresh.privateShare);
+          setThresholdX(thresh.publicShareX);
+          setThresholdY(thresh.publicShareY);
+
+          ws.send(JSON.stringify({
+            type: MessageType.GeneratingEscrow,
+            body: {
+              x: thresh.publicShareX,
+              y: thresh.publicShareY,
+            },
+          }));
+        }
+        break;
+      case MessageType.InitializePool:
+        bet.address = message.body.address;
+        bet.initialized = true;
+        setGeneratingEscrow(false);
+        setAddress(bet.address);
+        break;
       case MessageType.Offer:
+        setGeneratingEscrow(true);
+        let answer = await createAnswer(p2p, message.body.data, false);
+        await setupP2P(ws, MessageType.Answer, answer);
+        break;
       case MessageType.Answer:
+        await createAnswer(p2p, message.body.data, true);
+        break;
       case MessageType.OfferCandidate:
       case MessageType.AnswerCandidate:
-      case MessageType.GeneratingEscrow:
-        if (initiatedEscrow) {
-          switch (escrowState) {
-            case 1:
-
-              break;
-            case 3:
-              break;
-            case 5:
-              break;
-            case 7:
-              break;
-          }
-        } else {
-          switch (escrowState) {
-            case 0:
-              setGeneratingEscrow(true);
-              break;
-            case 2:
-              break;
-            case 4:
-              break;
-            case 6:
-              break;
-          }
-        }
-
-        setEscrowState(escrowState + 1);
+        await handleICEAnswerEvent(message.body.data, p2p);
         break;
-
+      case MessageType.RefreshBalance:
+        setBalance((message.body.balance / 1000000000).toFixed(8))
+        setBalanceUpdatedAt(new Date(message.body.updated_at));
+        setUpdatingBalance(false);
+        break;
 
       default:
         break;
@@ -107,10 +134,14 @@ const Pool = (props) => {
       console.log(pool);
       setUsername(user);
       setChats(bet.chats)
+      setAddress(bet.address || "");
     }
   }, [])
 
+
+
   return (
+
     <Center justifyContent="center" display="flex" alignItems="center">
       <div>
         <Box boxShadow='md' borderWidth='1px' marginBottom='10' marginTop='10' padding='2' borderRadius='lg' alignItems='center'>
@@ -159,31 +190,75 @@ const Pool = (props) => {
           </SimpleGrid>
         </Box>
 
-        <Box boxShadow='md' borderWidth='1px' marginBottom='5' padding='2' borderRadius='lg' textAlign="left">
+        {address === "" ?
+          <Box boxShadow='md' borderWidth='1px' marginBottom='5' padding='2' borderRadius='lg' textAlign="left">
 
-          <InputGroup>
-            <InputLeftAddon children='Step 1' />
+            <InputGroup>
+              <InputLeftAddon children='Step 1' />
 
+              <Button
+                borderTopLeftRadius='0'
+                borderBottomLeftRadius='0'
+                width='100%'
+                disabled={address !== "" || !otherUserConnected}
+                loadingText='Generating'
+                variant='outline'
+                isLoading={generatingEscrow}
+                onClick={async e => {
+                  setInitiatedEscrow(true);
+                  setGeneratingEscrow(true);
+
+                  let thresh = window.generateThresholdKey();
+                  setPrivateThresholdKey(thresh.privateShare);
+                  setThresholdX(thresh.publicShareX);
+                  setThresholdY(thresh.publicShareY);
+
+                  ws.send(JSON.stringify({
+                    type: MessageType.GeneratingEscrow,
+                    body: {
+                      x: thresh.publicShareX,
+                      y: thresh.publicShareY,
+                    },
+                  }));
+
+                  //let offer = await createOffer(p2p);
+                  //await setupP2P(ws, MessageType.Offer, offer);
+                }}
+              >
+                {address !== "" ? <CheckCircleIcon color="green" fontSize="xl" /> : otherUserConnected ? "Generate escrow wallet" : "Other user needs to be connected"}
+              </Button>
+            </InputGroup>
+
+          </Box> :
+          <Box boxShadow='md' borderWidth='1px' marginBottom='5' padding='2' borderRadius='lg' textAlign="left">
             <Button
-              borderTopLeftRadius='0'
-              borderBottomLeftRadius='0'
+              size='xs'
               width='100%'
-              disabled={setup || (!setup && !otherUserConnected)}
-              loadingText='Generating'
+              isLoading={updatingBalance}
+              loadingText='Updating balance'
               variant='outline'
-              isLoading={generatingEscrow}
               onClick={e => {
-                setInitiatedEscrow(true);
-                setEscrowState(escrowState + 1);
-                setGeneratingEscrow(true);
-                generateEscrow(ws);
-              }}
+                setUpdatingBalance(true);
+                ws.send(JSON.stringify({
+                  type: MessageType.RefreshBalance,
+                }));
+              }
+              }
+              marginBottom="10px"
             >
-              {setup ? <CheckCircleIcon color="green" fontSize="xl" /> : otherUserConnected ? "Generate escrow wallet" : "Other user needs to be connected"}
+              Refresh balance
             </Button>
-          </InputGroup>
-
-        </Box>
+            <Stat>
+              <StatNumber>{balance} eth
+                <Tooltip label='Balance is secured in an escrow wallet, noone on planet earth knows the secret key until the bet is resolved.'>
+                  <LockIcon fontSize="md" color="steelblue" marginLeft="10px" />
+                </Tooltip>
+              </StatNumber>
+              <StatLabel>{address}</StatLabel>
+              <StatHelpText fontSize="xs">Last Updated {balanceUpdatedAt.toUTCString()}</StatHelpText>
+            </Stat>
+          </Box>
+        }
 
         <Box boxShadow='md' borderWidth='1px' marginBottom='5' padding='2' borderRadius='lg' alignItems='left'>
           <Text textAlign="left" p="2">Chat
