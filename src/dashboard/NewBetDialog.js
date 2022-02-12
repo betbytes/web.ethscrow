@@ -72,7 +72,7 @@ const NewBetDialog = (props) => {
 
           <Stack direction='row' >
             <Button
-              size='xs'
+              size='sm'
               mr="5"
               width='75%'
               variant='outline'
@@ -80,7 +80,7 @@ const NewBetDialog = (props) => {
             >Send Invitation
             </Button>
             <Button
-              size='xs'
+              size='sm'
               width='25%'
               onClick={props.onClose}
               variant='outline'

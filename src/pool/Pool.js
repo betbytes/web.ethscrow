@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, Stat, StatLabel, StatHelpText, Tooltip, Modal, ModalOverlay, HStack, useDisclosure, InputGroup, InputLeftAddon, ModalBody, Input, ModalContent, Skeleton, ModalHeader, ModalCloseButton, useToast } from "@chakra-ui/react";
+import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, Stat, StatLabel, StatHelpText, Tooltip, Modal, ModalOverlay, HStack, useDisclosure, InputGroup, InputLeftAddon, ModalBody, Input, ModalContent, Skeleton, ModalHeader, ModalCloseButton, useToast, Link } from "@chakra-ui/react";
 import { ChevronDownIcon, ExternalLinkIcon, MinusIcon, InfoOutlineIcon, CloseIcon, CheckCircleIcon, LockIcon, DownloadIcon, ArrowUpIcon, CheckIcon } from "@chakra-ui/icons";
 import { createAnswer, createOffer, generateEscrow, handleICEAnswerEvent, handleICECandidateEvent, MessageType, setupP2P, submitMessage } from './PoolAPI';
+import SubmitState from './SubmitState';
 
 const Pool = (props) => {
 
@@ -42,6 +43,7 @@ const Pool = (props) => {
   const [iceSet, setIceSet] = useState(false);
   p2p.onicecandidate = e => handleICECandidateEvent(e, ws);
   const [privateThresholdKey, setPrivateThresholdKey] = useState("");
+  const [encOtherShare, setEncOtherShare] = useState("")
   const [thresholdX, setThresholdX] = useState("");
   const [thresholdY, setThresholdY] = useState("");
   const [address, setAddress] = useState("");
@@ -49,6 +51,8 @@ const Pool = (props) => {
   const [balanceUpdatedAt, setBalanceUpdatedAt] = useState(new Date());
   const [updatingBalance, setUpdatingBalance] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isSubmitOpen, onOpen: onSubmitOpen, onClose: onSubmitClose } = useDisclosure();
+  const [newState, setNewState] = useState(0);
 
 
   ws.onmessage = async (messageEvent) => {
@@ -77,8 +81,15 @@ const Pool = (props) => {
         break;
       case MessageType.GeneratingEscrow:
         let bobX = message.body.x, bobY = message.body.y;
+
+        if (encOtherShare === "") {
+          setEncOtherShare(message.body.enc_other_share);
+        }
+
         if (initiatedEscrow) {
           let address = window.generateEscrowAddress(thresholdX, thresholdY, bobX, bobY);
+          setAddress(address);
+
           ws.send(JSON.stringify({
             type: MessageType.InitializePool,
             body: {
@@ -92,21 +103,27 @@ const Pool = (props) => {
           setThresholdX(thresh.publicShareX);
           setThresholdY(thresh.publicShareY);
 
+          let address = window.generateEscrowAddress(thresh.publicShareX, thresh.publicShareY, bobX, bobY);
+          setAddress(address);
+
+          let encryptedShare = window.encrypt(pool.mediator_public_key, thresh.privateShare);
+
           ws.send(JSON.stringify({
             type: MessageType.GeneratingEscrow,
             body: {
               x: thresh.publicShareX,
               y: thresh.publicShareY,
+              enc_other_share: `${encryptedShare.c1}-${encryptedShare.c2}`,
             },
           }));
         }
         break;
-      case MessageType.InitializePool:
+      case MessageType.InitializePool: // not a used case anymore
         bet.address = message.body.address;
         bet.initialized = true;
         setGeneratingEscrow(false);
-        setAddress(bet.address);
         localStorage.setItem(address, privateThresholdKey);
+        localStorage.setItem(`other-${address}`, encOtherShare);
         onOpen();
         break;
       case MessageType.Offer:
@@ -137,7 +154,7 @@ const Pool = (props) => {
   const savePrivateThreshold = (e) => {
     console.log(privateThresholdKey);
     const element = document.createElement("a");
-    const file = new Blob([privateThresholdKey], { type: 'text/plain' });
+    const file = new Blob([`${privateThresholdKey}=${encOtherShare}`], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
     element.download = `ethscrow-${bet.id}-${username}.key`;
     document.body.appendChild(element);
@@ -149,8 +166,11 @@ const Pool = (props) => {
     let reader = new FileReader();
     reader.readAsText(file, "UTF-8");
     reader.onload = function (e) {
-      setPrivateThresholdKey(e.target.result);
-      localStorage.setItem(address, e.target.result);
+      let data = e.target.result.split("=");
+      setPrivateThresholdKey(data[0]);
+      setEncOtherShare(data[1]);
+      localStorage.setItem(address, data[0]);
+      localStorage.setItem(`other-${address}`, data[1]);
     }
   }
 
@@ -165,6 +185,7 @@ const Pool = (props) => {
       setAddress(bet.address || "");
       if (bet.address) {
         setPrivateThresholdKey(localStorage.getItem(address));
+        setEncOtherShare(localStorage.getItem(`other-${address}`));
       }
       setLoaded(true);
     }
@@ -244,6 +265,8 @@ const Pool = (props) => {
                     setGeneratingEscrow(true);
 
                     let thresh = window.generateThresholdKey();
+                    let encryptedShare = window.encrypt(pool.mediator_public_key, thresh.privateShare);
+
                     setPrivateThresholdKey(thresh.privateShare);
                     setThresholdX(thresh.publicShareX);
                     setThresholdY(thresh.publicShareY);
@@ -253,6 +276,7 @@ const Pool = (props) => {
                       body: {
                         x: thresh.publicShareX,
                         y: thresh.publicShareY,
+                        enc_other_share: `${encryptedShare.c1}-${encryptedShare.c2}`,
                       },
                     }));
 
@@ -385,6 +409,7 @@ const Pool = (props) => {
               spacing='2'
               textAlign='center'
               rounded='lg'
+              marginBottom="5px"
             >
               <Button
                 borderTopRightRadius='0'
@@ -395,6 +420,10 @@ const Pool = (props) => {
                 variant='outline'
                 backgroundColor={won ? "green" : "white"}
                 textColor={won ? "white" : "black"}
+                onClick={e => {
+                  setNewState(1);
+                  onSubmitOpen();
+                }}
               >
                 I won
               </Button>
@@ -407,12 +436,26 @@ const Pool = (props) => {
                 variant='outline'
                 backgroundColor={lost ? "red" : "white"}
                 textColor={lost ? "white" : "black"}
+                onClick={e => {
+                  setNewState(-1);
+                  onSubmitOpen();
+                }}
               >
                 I lost
               </Button>
             </SimpleGrid>
+            <Text textAlign="center" fontSize='sm'>Have a conflict? <Link color='steelblue' onClick={e => {
+              setNewState(-2);
+              onSubmitOpen();
+            }}>Submit to mediator</Link></Text>
           </Box>
         </Skeleton>
+
+        <Modal
+          isOpen={isSubmitOpen}
+          onClose={onSubmitClose}
+        ><SubmitState onClose={onSubmitClose} state={newState} encOtherShare={encOtherShare} privateThresholdKey={privateThresholdKey} ws={ws} />
+        </Modal>
       </div >
     </Center >
   );

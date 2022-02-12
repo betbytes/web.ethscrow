@@ -23,7 +23,7 @@ function App() {
 
   return (
     <div className="App">
-      <Heading size='sm' width="100%" backgroundColor="teal" padding="5px" color="white" >
+      <Heading size='sm' width="100%" backgroundColor="steelblue" padding="5px" color="white" >
         e(th)scrow
       </Heading>
 
@@ -36,7 +36,7 @@ function App() {
       </Routes>
       <div className='footer'>
         <Link href="https://github.com/ahmadayubi" isExternal>
-          <Image src="github.png" width="15px" display="inline" />
+          <Image src="/github.png" width="15px" display="inline" />
         </Link>
         <Text fontSize="xs">© 2022, E(th)scrow, created by Ahmad Ayubi | {' '}
           <Link href='https://ahmadayubi.com' color="" isExternal>ahmadayubi.com</Link>
