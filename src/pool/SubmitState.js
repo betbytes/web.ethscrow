@@ -13,7 +13,6 @@ const SubmitState = (props) => {
 
   const submitState = async (e) => {
     let res = await submitStateChange(props.poolID, props.state, props.encOtherShare, props.privateThresholdKey);
-    console.log(res);
 
     if (res.status === 202) {
       toast({
