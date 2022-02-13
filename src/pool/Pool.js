@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, Stat, StatLabel, StatHelpText, Tooltip, Modal, ModalOverlay, HStack, useDisclosure, InputGroup, InputLeftAddon, ModalBody, Input, ModalContent, Skeleton, ModalHeader, ModalCloseButton, useToast, Link } from "@chakra-ui/react";
+import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, Stat, StatLabel, StatHelpText, Tooltip, Modal, ModalOverlay, HStack, useDisclosure, InputGroup, InputLeftAddon, ModalBody, Input, ModalContent, Skeleton, ModalHeader, ModalCloseButton, useToast, Link, Heading } from "@chakra-ui/react";
 import { ChevronDownIcon, ExternalLinkIcon, MinusIcon, InfoOutlineIcon, CloseIcon, CheckCircleIcon, LockIcon, DownloadIcon, ArrowUpIcon, CheckIcon } from "@chakra-ui/icons";
-import { createAnswer, createOffer, generateEscrow, handleICEAnswerEvent, handleICECandidateEvent, MessageType, setupP2P, submitMessage } from './PoolAPI';
+import { BetState, createAnswer, createOffer, generateEscrow, handleICEAnswerEvent, handleICECandidateEvent, MessageType, setupP2P, submitMessage } from './PoolAPI';
 import SubmitState from './SubmitState';
 
 const Pool = (props) => {
@@ -34,8 +34,6 @@ const Pool = (props) => {
   const navigate = useNavigate();
   const [otherUserConnected, setOtherUserConnected] = useState(pool.other_user_connected);
   const [username, setUsername] = useState("");
-  const [lost, setLost] = useState(false);
-  const [won, setWon] = useState(false);
   const [chats, setChats] = useState([]);
   const [message, setMessage] = useState("");
   const [generatingEscrow, setGeneratingEscrow] = useState(false);
@@ -52,7 +50,9 @@ const Pool = (props) => {
   const [updatingBalance, setUpdatingBalance] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: isSubmitOpen, onOpen: onSubmitOpen, onClose: onSubmitClose } = useDisclosure();
-  const [newState, setNewState] = useState(0);
+  const [state, setState] = useState(0);
+  const [newState, setNewState] = useState(0)
+  const [completed, setCompleted] = useState(false)
 
 
   ws.onmessage = async (messageEvent) => {
@@ -143,7 +143,14 @@ const Pool = (props) => {
         setBalanceUpdatedAt(new Date(message.body.updated_at));
         setUpdatingBalance(false);
         break;
-
+      case MessageType.PoolStateChange:
+        if (message.body.bettor_username === username) {
+          setState(message.body.bettor_state);
+        } else {
+          setState(message.body.caller_state);
+        }
+        setCompleted((message.body.bettor_state === 1 && message.body.caller_state === -1) || (message.body.bettor_state === -1 && message.body.caller_state === 1));
+        break;
       default:
         break;
     }
@@ -157,6 +164,16 @@ const Pool = (props) => {
     const file = new Blob([`${privateThresholdKey}=${encOtherShare}`], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
     element.download = `ethscrow-${bet.id}-${username}.key`;
+    document.body.appendChild(element);
+    element.click();
+  }
+
+  const savePrivateKey = (e) => {
+    let key = window.generateEscrowPrivateKey(privateThresholdKey, bet.threshold_key);
+    const element = document.createElement("a");
+    const file = new Blob([key], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = `ethscrow-won-${bet.id}-DO-NOT-DELETE.key`;
     document.body.appendChild(element);
     element.click();
   }
@@ -180,6 +197,13 @@ const Pool = (props) => {
       navigate("/login");
     } else {
       console.log(pool);
+      if (bet.bettor_username === user) {
+        setState(bet.bettor_state);
+      } else {
+        setState(bet.caller_state);
+      }
+      setCompleted((bet.bettor_state === 1 && bet.caller_state === -1) || (bet.bettor_state === -1 && bet.caller_state === 1));
+
       setUsername(user);
       setChats(bet.chats)
       setAddress(bet.address || "");
@@ -376,7 +400,7 @@ const Pool = (props) => {
               ))}
             </Box>
 
-            <InputGroup>
+            {!completed && <InputGroup>
               <InputLeftAddon children={`${150 - message.length}`} />
               <Input
                 variant='outline'
@@ -397,14 +421,14 @@ const Pool = (props) => {
                   Send
                 </Button>
               </InputRightElement>
-            </InputGroup>
+            </InputGroup>}
 
           </Box>
         </Skeleton>
 
         <Skeleton isLoaded={loaded}>
           <Box boxShadow='md' borderWidth='1px' marginBottom='5' padding='2' borderRadius='lg' textAlign="left">
-            <SimpleGrid
+            {!completed && <><SimpleGrid
               columns={2}
               spacing='2'
               textAlign='center'
@@ -415,13 +439,13 @@ const Pool = (props) => {
                 borderTopRightRadius='0'
                 borderBottomRightRadius='0'
                 width='100%'
-                disabled={won || lost}
+                disabled={state !== BetState.NeutralState}
                 loadingText='Generating'
                 variant='outline'
-                backgroundColor={won ? "green" : "white"}
-                textColor={won ? "white" : "black"}
+                backgroundColor={state === BetState.WonState ? "green" : "white"}
+                textColor={state === BetState.WonState ? "white" : "black"}
                 onClick={e => {
-                  setNewState(1);
+                  setNewState(BetState.WonState);
                   onSubmitOpen();
                 }}
               >
@@ -431,30 +455,61 @@ const Pool = (props) => {
                 borderTopLeftRadius='0'
                 borderBottomLeftRadius='0'
                 width='100%'
-                disabled={won || lost}
+                disabled={state !== BetState.NeutralState}
                 loadingText='Generating'
                 variant='outline'
-                backgroundColor={lost ? "red" : "white"}
-                textColor={lost ? "white" : "black"}
+                backgroundColor={state === BetState.LostState ? "red" : "white"}
+                textColor={state === BetState.LostState ? "white" : "black"}
                 onClick={e => {
-                  setNewState(-1);
+                  setNewState(BetState.LostState);
                   onSubmitOpen();
                 }}
               >
                 I lost
               </Button>
             </SimpleGrid>
-            <Text textAlign="center" fontSize='sm'>Have a conflict? <Link color='steelblue' onClick={e => {
-              setNewState(-2);
-              onSubmitOpen();
-            }}>Submit to mediator</Link></Text>
+              <Text textAlign="center" fontSize='sm'>Have a conflict? <Link color='steelblue' onClick={e => {
+                setNewState(BetState.ConflictState);
+                onSubmitOpen();
+              }}>Submit to mediator</Link></Text></>}
+            {completed && state === BetState.WonState &&
+              <>
+                <Text textAlign="center">You <Text as="span" fontSize="xl" color="green">won</Text> 🎉🎉</Text>
+                <Button
+                  borderTopLeftRadius='0'
+                  borderBottomLeftRadius='0'
+                  width='100%'
+                  loadingText='Generating'
+                  marginTop="5px"
+                  variant='outline'
+                  backgroundColor={"white"}
+                  textColor={"black"}
+                  onClick={savePrivateKey}
+                >
+                  Download escrow private key
+                </Button>
+                <Text textAlign="center">Or</Text>
+                <InputGroup>
+                  <InputLeftAddon children='0x' fontSize="sm" />
+                  <Input fontSize="sm" placeholder='deposit wallet address' />
+                  <InputRightElement width="9rem">
+                    <Button h='1.75rem' size='xs' onClick={e => console.log(e)}>
+                      Transfer all out
+                    </Button>
+                  </InputRightElement>
+                </InputGroup>
+              </>
+            }
+            {completed && state === BetState.LostState &&
+              <Text textAlign="center">You <Text as="span" fontSize="xl" color="red">lost</Text> 🙃🙂</Text>
+            }
           </Box>
         </Skeleton>
 
         <Modal
           isOpen={isSubmitOpen}
           onClose={onSubmitClose}
-        ><SubmitState onClose={onSubmitClose} state={newState} encOtherShare={encOtherShare} privateThresholdKey={privateThresholdKey} ws={ws} />
+        ><SubmitState poolID={bet.id} onClose={onSubmitClose} state={newState} encOtherShare={encOtherShare} privateThresholdKey={privateThresholdKey} ws={ws} />
         </Modal>
       </div >
     </Center >

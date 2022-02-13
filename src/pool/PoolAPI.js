@@ -1,3 +1,5 @@
+import { API_URL } from "../utils/constants";
+
 export const MessageType = {
   Connect: 0,
   Disconnect: 1,
@@ -10,7 +12,15 @@ export const MessageType = {
   OfferCandidate: 8,
   AnswerCandidate: 9,
   InitializePool: 10,
+  PoolStateChange: 11,
 };
+
+export const BetState = {
+  LostState: -1,
+  WonState: 1,
+  NeutralState: 0,
+  ConflictState: -2,
+}
 
 export async function submitMessage(ws, msg) {
   if (msg === "") {
@@ -76,4 +86,32 @@ export async function handleICEAnswerEvent(sdp, p2p) {
       await p2p.addIceCandidate(candidate);
     } catch (e) { }
   }
+}
+
+export async function submitStateChange(id, state, encOtherShare, privateThresholdKey) {
+  let changedState = {
+    new_state: state,
+  };
+
+  if (state === BetState.LostState) {
+    changedState.threshold_key = privateThresholdKey;
+  } else if (state === BetState.ConflictState) {
+    changedState.threshold_key = encOtherShare;
+    changedState.plain_threshold_key = privateThresholdKey;
+  }
+
+  let res = await fetch(API_URL + `/broker/${id}`, {
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    withCredentials: true,
+    body: JSON.stringify(changedState),
+  });
+
+  let response = await res.json();
+  console.log(response);
+
+  return { status: res.status };
 }

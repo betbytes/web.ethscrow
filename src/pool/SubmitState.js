@@ -3,6 +3,7 @@ import { useState } from "react";
 import "../App.css";
 import { API_URL } from "../utils/constants";
 import { useToast } from '@chakra-ui/react'
+import { BetState, submitStateChange } from "./PoolAPI";
 
 const SubmitState = (props) => {
 
@@ -11,15 +12,25 @@ const SubmitState = (props) => {
   });
 
   const submitState = async (e) => {
-    props.ws.send(JSON.stringify({
+    let res = await submitStateChange(props.poolID, props.state, props.encOtherShare, props.privateThresholdKey);
+    console.log(res);
 
-    }));
-    toast({
-      title: 'State Updated.',
-      status: 'success',
-      duration: 2000,
-      isClosable: true,
-    });
+    if (res.status === 202) {
+      toast({
+        title: 'State Updated.',
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
+    } else {
+      toast({
+        title: 'Error updating.',
+        status: 'error',
+        duration: 2000,
+        isClosable: true,
+      });
+    }
+
     props.onClose();
   };
 
@@ -28,11 +39,11 @@ const SubmitState = (props) => {
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>          {
-          (props.state === 1 &&
+          (props.state === BetState.WonState &&
             <Text>Are you sure you <Text as="span" fontSize="xl" color="green">won</Text>?</Text>)
-          || (props.state === -1 &&
+          || (props.state === BetState.LostState &&
             <Text>Are you sure you <Text as="span" fontSize="xl" color="red">lost</Text>?</Text>)
-          || (props.state === -2 &&
+          || (props.state === BetState.ConflictState &&
             <Text>Submit <Text as="span" fontSize="xl" color="orange">conflict</Text> to the mediator.</Text>)
 
         }</ModalHeader>
