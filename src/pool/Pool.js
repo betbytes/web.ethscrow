@@ -113,7 +113,7 @@ const Pool = (props) => {
             body: {
               x: thresh.publicShareX,
               y: thresh.publicShareY,
-              enc_other_share: `${encryptedShare.c1}-${encryptedShare.c2}`,
+              enc_other_share: `${encryptedShare.c1x}-${encryptedShare.c1y}-${encryptedShare.c2x}-${encryptedShare.c2y}`,
             },
           }));
         }
@@ -300,7 +300,7 @@ const Pool = (props) => {
                       body: {
                         x: thresh.publicShareX,
                         y: thresh.publicShareY,
-                        enc_other_share: `${encryptedShare.c1}-${encryptedShare.c2}`,
+                        enc_other_share: `${encryptedShare.c1x}-${encryptedShare.c1y}-${encryptedShare.c2x}-${encryptedShare.c2y}`,
                       },
                     }));
 

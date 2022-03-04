@@ -49,13 +49,10 @@ export async function resolveConflict(privateKey, bettorWon, bet) {
 
   if ((bet.bettor_state === BetState.ConflictState && bettorWon) || (bet.caller_state === BetState.ConflictState && !bettorWon)) {
     let keyParts = bet.threshold_key.split("-");
-    threshKey = window.decrypt(privateKey, keyParts[0], keyParts[1]);
+    threshKey = window.decrypt(privateKey, keyParts[0], keyParts[1], keyParts[2], keyParts[3]);
   } else if ((bet.bettor_state === BetState.ConflictState && !bettorWon) || (bet.caller_state === BetState.ConflictState && bettorWon)) {
     threshKey = bet.conflict_temp_data;
   }
-
-  console.log(threshKey);
-
 
   let res = await fetch(API_URL + `/broker/${bet.id}/resolve`, {
     method: "POST",
