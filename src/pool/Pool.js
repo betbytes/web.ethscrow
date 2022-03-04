@@ -428,7 +428,8 @@ const Pool = (props) => {
 
         <Skeleton isLoaded={loaded}>
           <Box boxShadow='md' borderWidth='1px' marginBottom='5' padding='2' borderRadius='lg' textAlign="left">
-            {!completed && <><SimpleGrid
+            { }
+            {!completed && state === BetState.NeutralState && <SimpleGrid
               columns={2}
               spacing='2'
               textAlign='center'
@@ -467,11 +468,13 @@ const Pool = (props) => {
               >
                 I lost
               </Button>
-            </SimpleGrid>
-              <Text textAlign="center" fontSize='sm'>Have a conflict? <Link color='steelblue' onClick={e => {
-                setNewState(BetState.ConflictState);
-                onSubmitOpen();
-              }}>Submit to mediator</Link></Text></>}
+            </SimpleGrid>}
+            {!completed && (bet.bettor_state === BetState.ConflictState || bet.caller_state === BetState.ConflictState) && <Text textAlign="center">🚩 Bet is currently in-conflict. <br /> Waiting on {bet.mediator_username} to resolve.</Text>}
+            {!completed && !(bet.bettor_state === BetState.ConflictState || bet.caller_state === BetState.ConflictState) && state === BetState.WonState && <Text textAlign="center">🎉 You claimed a win. <br /> Waiting on {bet.bettor_username === username ? bet.caller_username : bet.bettor_username} to respond.</Text>}
+            {!completed && !(bet.bettor_state === BetState.ConflictState || bet.caller_state === BetState.ConflictState) && <Text textAlign="center" fontSize='sm'>Have a conflict? <Link color='steelblue' onClick={e => {
+              setNewState(BetState.ConflictState);
+              onSubmitOpen();
+            }}>Submit to mediator</Link></Text>}
             {completed && state === BetState.WonState &&
               <>
                 <Text textAlign="center">You <Text as="span" fontSize="xl" color="green">won</Text> 🎉🎉</Text>

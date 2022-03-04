@@ -1,3 +1,4 @@
+import { BetState } from "../pool/PoolAPI";
 import { API_URL } from "../utils/constants";
 
 export async function getBets() {
@@ -36,6 +37,37 @@ export async function declineBet(id) {
     },
     credentials: 'include',
     withCredentials: true,
+  });
+
+  let json = await res.json();
+
+  return { status: res.status };
+}
+
+export async function resolveConflict(privateKey, bettorWon, bet) {
+  let threshKey;
+
+  if ((bet.bettor_state === BetState.ConflictState && bettorWon) || (bet.caller_state === BetState.ConflictState && !bettorWon)) {
+    let keyParts = bet.threshold_key.split("-");
+    threshKey = window.decrypt(privateKey, keyParts[0], keyParts[1]);
+  } else if ((bet.bettor_state === BetState.ConflictState && !bettorWon) || (bet.caller_state === BetState.ConflictState && bettorWon)) {
+    threshKey = bet.conflict_temp_data;
+  }
+
+  console.log(threshKey);
+
+
+  let res = await fetch(API_URL + `/broker/${bet.id}/resolve`, {
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    withCredentials: true,
+    body: JSON.stringify({
+      threshold_key: threshKey,
+      winner_username: bettorWon ? bet.bettor_username : bet.caller_username,
+    }),
   });
 
   let json = await res.json();

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { StatNumber, Box, Text, Button, Center, SimpleGrid, Menu, MenuButton, MenuItem, MenuList, Stat, StatLabel, StatHelpText, Badge, useDisclosure, Modal, Stack, Skeleton, VStack, HStack, Tooltip } from "@chakra-ui/react";
 import { ChevronDownIcon, ExternalLinkIcon, CheckIcon, MinusIcon, InfoOutlineIcon, CloseIcon } from "@chakra-ui/icons";
 import { API_URL } from "../utils/constants";
-import { acceptBet, declineBet, getBets } from './DashboardAPI';
+import { acceptBet, declineBet, getBets, resolveConflict } from './DashboardAPI';
 import NewBetDialog from './NewBetDialog';
 
 const Dashboard = () => {
@@ -19,6 +19,7 @@ const Dashboard = () => {
   let navigate = useNavigate();
 
   const [username, setUsername] = useState("");
+  const [privateKey, setPrivateKey] = useState("")
 
   useEffect(() => {
     let user = localStorage.getItem("username");
@@ -26,17 +27,21 @@ const Dashboard = () => {
       navigate("/login");
     } else {
       setUsername(user);
-      getBets().then(bets => {
-        console.log(bets);
-        setActiveBets(bets.active ?? []);
-        setIndoxBets(bets.inbox ?? []);
-        setMediatedBets(bets.resolve ?? []);
-        setSentBets(bets.sent ?? []);
-        setCompletedBets(bets.completed ?? []);
-        setLoaded(true);
-      });
+      setPrivateKey(localStorage.getItem(user));
+      getAndSetBets();
     }
   }, []);
+
+  const getAndSetBets = async () => {
+    let bets = await getBets();
+    console.log(bets);
+    setActiveBets(bets.active ?? []);
+    setIndoxBets(bets.inbox ?? []);
+    setMediatedBets(bets.resolve ?? []);
+    setSentBets(bets.sent ?? []);
+    setCompletedBets(bets.completed ?? []);
+    setLoaded(true);
+  };
 
   const logout = (e) => {
     localStorage.clear();
@@ -148,7 +153,7 @@ const Dashboard = () => {
 
                     <MenuItem >🎉 I won</MenuItem>
                     <MenuItem >🙃 I lost</MenuItem>
-                    <MenuItem icon={<InfoOutlineIcon />}>Conflict</MenuItem>
+                    <MenuItem >🚩 Conflict</MenuItem>
                   </MenuList>
                 </Menu>
               ))}
@@ -157,7 +162,7 @@ const Dashboard = () => {
           </Box>}
 
         {!indoxBets.length ? <div></div> :
-          <Box boxShadow='md' borderWidth='1px' marginTop='5' padding='2' borderRadius='lg' alignItems='left'>
+          <Box boxShadow='md' borderWidth='1px' marginBottom='5' marginTop='5' padding='2' borderRadius='lg' alignItems='left'>
             <Text textAlign="left" p="2">Invitations
               <Badge ml='1' fontSize='0.8em' colorScheme='green' variant="subtle">
                 New
@@ -182,8 +187,14 @@ const Dashboard = () => {
                     </Stat>
                   </MenuButton>
                   <MenuList>
-                    <MenuItem icon={<CheckIcon />} onClick={e => acceptBet(bet.id)}>Accept</MenuItem>
-                    <MenuItem icon={<CloseIcon />} onClick={e => declineBet(bet.id)}>Decline</MenuItem>
+                    <MenuItem onClick={e => {
+                      acceptBet(bet.id);
+                      setTimeout(getAndSetBets, 500);
+                    }}>✔️ Accept</MenuItem>
+                    <MenuItem onClick={e => {
+                      declineBet(bet.id);
+                      setTimeout(getAndSetBets, 500);
+                    }}>❌ Decline</MenuItem>
                   </MenuList>
                 </Menu>
               ))}
@@ -217,8 +228,14 @@ const Dashboard = () => {
                     </Stat>
                   </MenuButton>
                   <MenuList>
-                    <MenuItem onClick={e => acceptBet(bet.id)}>🎉 {bet.bettor_username} won</MenuItem>
-                    <MenuItem onClick={e => declineBet(bet.id)}>🎉 {bet.caller_username} won</MenuItem>
+                    <MenuItem onClick={e => {
+                      resolveConflict(privateKey, true, bet);
+                      setTimeout(getAndSetBets, 500);
+                    }}>🎉 {bet.bettor_username} won</MenuItem>
+                    <MenuItem onClick={e => {
+                      resolveConflict(privateKey, false, bet);
+                      setTimeout(getAndSetBets, 500);
+                    }}>🎉 {bet.caller_username} won</MenuItem>
                   </MenuList>
                 </Menu>
               ))}
@@ -252,7 +269,10 @@ const Dashboard = () => {
                     </Stat>
                   </MenuButton>
                   <MenuList>
-                    <MenuItem onClick={e => acceptBet(bet.id)}>Cancel</MenuItem>
+                    <MenuItem onClick={e => {
+                      acceptBet(bet.id);
+                      setTimeout(getAndSetBets, 500);
+                    }}>Cancel</MenuItem>
                   </MenuList>
                 </Menu>
               ))}
@@ -298,11 +318,11 @@ const Dashboard = () => {
         <Modal
           isOpen={isOpen}
           onClose={onClose}
-        ><NewBetDialog onClose={onClose} />
+        ><NewBetDialog onClose={onClose} getAndSetBets={getAndSetBets} />
         </Modal>
 
       </div>
-    </Center>
+    </Center >
   )
 }
 

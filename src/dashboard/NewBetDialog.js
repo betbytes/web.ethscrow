@@ -45,6 +45,7 @@ const NewBetDialog = (props) => {
         isClosable: true,
       });
       props.onClose();
+      setTimeout(props.getAndSetBets(), 500);
     }
   };
 
