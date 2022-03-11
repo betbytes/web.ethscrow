@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, Stat, StatLabel, StatHelpText, Tooltip, Modal, ModalOverlay, HStack, useDisclosure, InputGroup, InputLeftAddon, ModalBody, Input, ModalContent, Skeleton, ModalHeader, ModalCloseButton, useToast, Link, Heading } from "@chakra-ui/react";
 import { ChevronDownIcon, ExternalLinkIcon, MinusIcon, InfoOutlineIcon, CloseIcon, CheckCircleIcon, LockIcon, DownloadIcon, ArrowUpIcon, CheckIcon } from "@chakra-ui/icons";
-import { BetState, createAnswer, createOffer, generateEscrow, handleICEAnswerEvent, handleICECandidateEvent, MessageType, setupP2P, submitMessage } from './PoolAPI';
+import { BetState, createAnswer, createOffer, generateEscrow, handleICEAnswerEvent, handleICECandidateEvent, MessageType, setupP2P, submitMessage, transferAllOut } from './PoolAPI';
 import SubmitState from './SubmitState';
 
 const Pool = (props) => {
@@ -53,6 +53,8 @@ const Pool = (props) => {
   const [state, setState] = useState(0);
   const [newState, setNewState] = useState(0)
   const [completed, setCompleted] = useState(false)
+  const [transferOutAddress, setTransferOutAddress] = useState("");
+  const [privateKey, setPrivateKey] = useState("");
 
 
   ws.onmessage = async (messageEvent) => {
@@ -87,7 +89,7 @@ const Pool = (props) => {
         }
 
         if (initiatedEscrow) {
-          let address = window.generateEscrowAddress(thresholdX, thresholdY, bobX, bobY);
+          let address = window.generateEscrowAddress(thresholdX, thresholdY, bobX, bobY, message.body.c, message.body.r, message.body.vGx, message.body.vGy);
           setAddress(address);
 
           ws.send(JSON.stringify({
@@ -103,7 +105,7 @@ const Pool = (props) => {
           setThresholdX(thresh.publicShareX);
           setThresholdY(thresh.publicShareY);
 
-          let address = window.generateEscrowAddress(thresh.publicShareX, thresh.publicShareY, bobX, bobY);
+          let address = window.generateEscrowAddress(thresh.publicShareX, thresh.publicShareY, bobX, bobY, thresh.c, thresh.r, thresh.vGx, thresh.vGy);
           setAddress(address);
 
           let encryptedShare = window.encrypt(pool.mediator_public_key, thresh.privateShare);
@@ -113,6 +115,10 @@ const Pool = (props) => {
             body: {
               x: thresh.publicShareX,
               y: thresh.publicShareY,
+              c: thresh.c,
+              r: thresh.r,
+              vGx: thresh.vGx,
+              vGy: thresh.vGy,
               enc_other_share: `${encryptedShare.c1x}-${encryptedShare.c1y}-${encryptedShare.c2x}-${encryptedShare.c2y}`,
             },
           }));
@@ -139,7 +145,7 @@ const Pool = (props) => {
         await handleICEAnswerEvent(message.body.data, p2p);
         break;
       case MessageType.RefreshBalance:
-        setBalance((message.body.balance / 1000000000).toFixed(8))
+        setBalance((message.body.balance / 1000000000000000000).toFixed(8))
         setBalanceUpdatedAt(new Date(message.body.updated_at));
         setUpdatingBalance(false);
         break;
@@ -204,12 +210,16 @@ const Pool = (props) => {
       }
       setCompleted((bet.bettor_state === 1 && bet.caller_state === -1) || (bet.bettor_state === -1 && bet.caller_state === 1));
 
+      setPrivateKey(localStorage.getItem(user));
       setUsername(user);
       setChats(bet.chats)
       setAddress(bet.address || "");
       if (bet.address) {
         setPrivateThresholdKey(localStorage.getItem(address));
         setEncOtherShare(localStorage.getItem(`other-${address}`));
+        ws.send(JSON.stringify({
+          type: MessageType.RefreshBalance,
+        }));
       }
       setLoaded(true);
     }
@@ -300,6 +310,10 @@ const Pool = (props) => {
                       body: {
                         x: thresh.publicShareX,
                         y: thresh.publicShareY,
+                        c: thresh.c,
+                        r: thresh.r,
+                        vGx: thresh.vGx,
+                        vGy: thresh.vGy,
                         enc_other_share: `${encryptedShare.c1x}-${encryptedShare.c1y}-${encryptedShare.c2x}-${encryptedShare.c2y}`,
                       },
                     }));
@@ -337,8 +351,6 @@ const Pool = (props) => {
                   <Button
                     size='xs'
                     width='25%'
-                    isLoading={updatingBalance}
-                    loadingText='Updating balance'
                     variant='outline'
                     onClick={savePrivateThreshold}
                   >
@@ -494,9 +506,12 @@ const Pool = (props) => {
                 <Text textAlign="center">Or</Text>
                 <InputGroup>
                   <InputLeftAddon children='0x' fontSize="sm" />
-                  <Input fontSize="sm" placeholder='deposit wallet address' />
+                  <Input fontSize="sm" placeholder='deposit wallet address' onChange={e => setTransferOutAddress(e.target.value)} />
                   <InputRightElement width="9rem">
-                    <Button h='1.75rem' size='xs' onClick={e => console.log(e)}>
+                    <Button h='1.75rem' size='xs' onClick={e => {
+                      let combined = window.generateEscrowPrivateKey(privateThresholdKey, bet.threshold_key);
+                      transferAllOut(bet.id, transferOutAddress, combined);
+                    }}>
                       Transfer all out
                     </Button>
                   </InputRightElement>

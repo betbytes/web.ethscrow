@@ -115,3 +115,32 @@ export async function submitStateChange(id, state, encOtherShare, privateThresho
 
   return { status: res.status };
 }
+
+export async function transferAllOut(id, toAddress, privateKey) {
+  let genResponse = await fetch(API_URL + `/broker/${id}/withdraw/generate`, {
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    withCredentials: true,
+    body: JSON.stringify({ to: toAddress }),
+  });
+
+  let tx = await genResponse.json();
+  let signedTx = window.signEthTx(JSON.stringify(tx.transaction), tx.network_id, privateKey);
+
+  let processResponse = await fetch(API_URL + `/broker/${id}/withdraw`, {
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    withCredentials: true,
+    body: signedTx,
+  });
+
+  let hash = await processResponse.json();
+
+  return { status: processResponse.status, hash: hash };
+}
