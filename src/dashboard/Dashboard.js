@@ -108,58 +108,58 @@ const Dashboard = () => {
           </Box>
         </>
         }
-        {activeBets.length &&
-          <Box boxShadow='md' borderWidth='1px' marginBottom='5' marginTop='10px' padding='2' borderRadius='lg' alignItems='left'>
-            <SimpleGrid
-              columns={2}
-              spacing='8'
-              textAlign='center'
-              rounded='lg'
+
+        <Box boxShadow='md' borderWidth='1px' marginBottom='5' marginTop='10px' padding='2' borderRadius='lg' alignItems='left'>
+          <SimpleGrid
+            columns={2}
+            spacing='8'
+            textAlign='center'
+            rounded='lg'
+          >
+            <h1>Active bets</h1>
+
+            <Button
+              size='xs'
+              width='100%'
+              loadingText='Logging in'
+              variant='outline'
+              onClick={onOpen}
             >
-              <h1>Active bets</h1>
+              Create a new bet
+            </Button>
+          </SimpleGrid>
 
-              <Button
-                size='xs'
-                width='100%'
-                loadingText='Logging in'
-                variant='outline'
-                onClick={onOpen}
-              >
-                Create a new bet
-              </Button>
-            </SimpleGrid>
+          <SimpleGrid
+            spacing='2'
+            paddingTop='5'
+            textAlign='center'
+            rounded='lg'
+          >
 
-            <SimpleGrid
-              spacing='2'
-              paddingTop='5'
-              textAlign='center'
-              rounded='lg'
-            >
+            {activeBets.map(bet => (
+              <Menu key={bet.id}>
+                <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="outline" height='auto' p='2'>
+                  <Stat textAlign="left">
+                    <StatLabel>{bet.reason}</StatLabel>
+                    <StatNumber fontSize="lg">Bet with {bet.bettor_username === username ? bet.caller_username : bet.bettor_username}</StatNumber>
+                    <StatHelpText isTruncated>Mediated by {bet.mediator_username} • {bet.created_at.split("T")[0]}</StatHelpText>
 
-              {activeBets.map(bet => (
-                <Menu key={bet.id}>
-                  <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="outline" height='auto' p='2'>
-                    <Stat textAlign="left">
-                      <StatLabel>{bet.reason}</StatLabel>
-                      <StatNumber fontSize="lg">Bet with {bet.bettor_username === username ? bet.caller_username : bet.bettor_username}</StatNumber>
-                      <StatHelpText isTruncated>Mediated by {bet.mediator_username} • {bet.created_at.split("T")[0]}</StatHelpText>
+                  </Stat>
+                </MenuButton>
+                <MenuList>
+                  <Link to={"/pool/" + bet.id} target="_blank">
+                    <MenuItem icon={<ExternalLinkIcon />}>Open</MenuItem>
+                  </Link>
 
-                    </Stat>
-                  </MenuButton>
-                  <MenuList>
-                    <Link to={"/pool/" + bet.id} target="_blank">
-                      <MenuItem icon={<ExternalLinkIcon />}>Open</MenuItem>
-                    </Link>
+                  <MenuItem >🎉 I won</MenuItem>
+                  <MenuItem >🙃 I lost</MenuItem>
+                  <MenuItem >🚩 Conflict</MenuItem>
+                </MenuList>
+              </Menu>
+            ))}
 
-                    <MenuItem >🎉 I won</MenuItem>
-                    <MenuItem >🙃 I lost</MenuItem>
-                    <MenuItem >🚩 Conflict</MenuItem>
-                  </MenuList>
-                </Menu>
-              ))}
-
-            </SimpleGrid>
-          </Box>}
+          </SimpleGrid>
+        </Box>
 
         {!indoxBets.length ? <div></div> :
           <Box boxShadow='md' borderWidth='1px' marginBottom='5' marginTop='5' padding='2' borderRadius='lg' alignItems='left'>

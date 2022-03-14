@@ -29,7 +29,6 @@ const Pool = (props) => {
   const [loaded, setLoaded] = useState(false);
   const chatBoxRef = useRef(null);
   const pool = props.pool;
-  const bet = pool.pool;
   const ws = props.webSocket;
   const navigate = useNavigate();
   const [otherUserConnected, setOtherUserConnected] = useState(pool.other_user_connected);
@@ -50,11 +49,14 @@ const Pool = (props) => {
   const [updatingBalance, setUpdatingBalance] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: isSubmitOpen, onOpen: onSubmitOpen, onClose: onSubmitClose } = useDisclosure();
+  const { isOpen: isWithdrawOpen, onOpen: onWithdrawOpen, onClose: onWithdrawClose } = useDisclosure();
   const [state, setState] = useState(0);
   const [newState, setNewState] = useState(0)
   const [completed, setCompleted] = useState(false)
   const [transferOutAddress, setTransferOutAddress] = useState("");
   const [privateKey, setPrivateKey] = useState("");
+  const [transactionHash, setTransactionHash] = useState("");
+  const [bet, setBet] = useState({});
 
 
   ws.onmessage = async (messageEvent) => {
@@ -156,6 +158,7 @@ const Pool = (props) => {
           setState(message.body.caller_state);
         }
         setCompleted((message.body.bettor_state === 1 && message.body.caller_state === -1) || (message.body.bettor_state === -1 && message.body.caller_state === 1));
+        setBet(message.body);
         break;
       default:
         break;
@@ -203,20 +206,22 @@ const Pool = (props) => {
       navigate("/login");
     } else {
       console.log(pool);
-      if (bet.bettor_username === user) {
-        setState(bet.bettor_state);
+      let b = pool.pool;
+      setBet(b);
+      if (b.bettor_username === user) {
+        setState(b.bettor_state);
       } else {
-        setState(bet.caller_state);
+        setState(b.caller_state);
       }
-      setCompleted((bet.bettor_state === 1 && bet.caller_state === -1) || (bet.bettor_state === -1 && bet.caller_state === 1));
+      setCompleted((b.bettor_state === 1 && b.caller_state === -1) || (b.bettor_state === -1 && b.caller_state === 1));
 
       setPrivateKey(localStorage.getItem(user));
       setUsername(user);
-      setChats(bet.chats)
-      setAddress(bet.address || "");
-      if (bet.address) {
-        setPrivateThresholdKey(localStorage.getItem(address));
-        setEncOtherShare(localStorage.getItem(`other-${address}`));
+      setChats(b.chats)
+      setAddress(b.address || "");
+      if (b.address) {
+        setPrivateThresholdKey(localStorage.getItem(b.address));
+        setEncOtherShare(localStorage.getItem(`other-${b.address}`));
         ws.send(JSON.stringify({
           type: MessageType.RefreshBalance,
         }));
@@ -508,9 +513,21 @@ const Pool = (props) => {
                   <InputLeftAddon children='0x' fontSize="sm" />
                   <Input fontSize="sm" placeholder='deposit wallet address' onChange={e => setTransferOutAddress(e.target.value)} />
                   <InputRightElement width="9rem">
-                    <Button h='1.75rem' size='xs' onClick={e => {
+                    <Button h='1.75rem' size='xs' onClick={async e => {
                       let combined = window.generateEscrowPrivateKey(privateThresholdKey, bet.threshold_key);
-                      transferAllOut(bet.id, transferOutAddress, combined);
+                      let trans = await transferAllOut(bet.id, transferOutAddress, combined);
+                      if (trans.status === 202) {
+                        setTransactionHash(trans.hash);
+                        onWithdrawOpen();
+                      } else {
+                        toast({
+                          title: 'Failed to withdraw.',
+                          status: 'error',
+                          duration: 500,
+                          isClosable: true,
+                        });
+                      }
+                      console.log(trans);
                     }}>
                       Transfer all out
                     </Button>
@@ -523,6 +540,34 @@ const Pool = (props) => {
             }
           </Box>
         </Skeleton>
+
+        <Modal isOpen={isWithdrawOpen} onClose={onWithdrawClose}>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader><CheckIcon color="green" marginRight="15px" />Escrow Wallet Withdrawn</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <Text>Transaction Hash </Text>
+              <Text>{transactionHash}</Text>
+              <Button
+                size='xs'
+                width='100%'
+                variant='outline'
+                onClick={() => {
+                  navigator.clipboard.writeText(transactionHash);
+                  toast({
+                    title: 'Copied To Clipboard.',
+                    status: 'success',
+                    duration: 500,
+                    isClosable: true,
+                  });
+                }}
+              >
+                Copy To Clipboard
+              </Button>
+            </ModalBody>
+          </ModalContent>
+        </Modal>
 
         <Modal
           isOpen={isSubmitOpen}
