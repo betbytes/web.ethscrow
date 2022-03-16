@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { StatNumber, Box, Text, Button, Center, SimpleGrid, Menu, MenuButton, MenuItem, MenuList, Stat, StatLabel, StatHelpText, Badge, useDisclosure, Modal, Stack, Skeleton, VStack, HStack, Tooltip } from "@chakra-ui/react";
+import { StatNumber, Box, Text, Button, Center, SimpleGrid, Menu, MenuButton, MenuItem, MenuList, Stat, StatLabel, StatHelpText, Badge, useDisclosure, Modal, Stack, Skeleton, AccordionIcon, HStack, Accordion, AccordionItem, AccordionButton, AccordionPanel } from "@chakra-ui/react";
 import { ChevronDownIcon, ExternalLinkIcon, CheckIcon, MinusIcon, InfoOutlineIcon, CloseIcon } from "@chakra-ui/icons";
 import { API_URL } from "../utils/constants";
 import { acceptBet, declineBet, getBets, resolveConflict } from './DashboardAPI';
@@ -161,160 +161,192 @@ const Dashboard = () => {
           </SimpleGrid>
         </Box>
 
-        {!indoxBets.length ? <div></div> :
-          <Box boxShadow='md' borderWidth='1px' marginBottom='5' marginTop='5' padding='2' borderRadius='lg' alignItems='left'>
-            <Text textAlign="left" p="2">Invitations
-              <Badge ml='1' fontSize='0.8em' colorScheme='green' variant="subtle">
-                New
-              </Badge>
-            </Text>
+        <Accordion allowMultiple>
+          {!indoxBets.length ? <div></div> :
+            <AccordionItem>
+              <h2>
+                <AccordionButton>
+                  <Box flex='1' textAlign='left' >
+                    <Text textAlign="left" p="2">Invitations
+                      <Badge ml='1' fontSize='0.8em' colorScheme='green' variant="subtle">
+                        New
+                      </Badge>
+                    </Text>
+                  </Box>
+                  <AccordionIcon />
+                </AccordionButton>
+              </h2>
+              <AccordionPanel>
+                <SimpleGrid
+                  spacing='2'
+                  paddingTop='5'
+                  textAlign='center'
+                  rounded='lg'
+                >
+                  {indoxBets.map(bet => (
+                    <Menu key={bet.id}>
+                      <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="outline" height='auto' p='2' textAlign="left">
+                        <Stat textAlign="left">
+                          <StatLabel isTruncated>{bet.reason}</StatLabel>
+                          <StatNumber fontSize="lg">From {bet.bettor_username}</StatNumber>
+                          <StatHelpText>{bet.created_at}</StatHelpText>
 
-            <SimpleGrid
-              spacing='2'
-              paddingTop='5'
-              textAlign='center'
-              rounded='lg'
-            >
-              {indoxBets.map(bet => (
+                        </Stat>
+                      </MenuButton>
+                      <MenuList>
+                        <MenuItem onClick={e => {
+                          acceptBet(bet.id);
+                          setTimeout(getAndSetBets, 500);
+                        }}>✔️ Accept</MenuItem>
+                        <MenuItem onClick={e => {
+                          declineBet(bet.id);
+                          setTimeout(getAndSetBets, 500);
+                        }}>❌ Decline</MenuItem>
+                      </MenuList>
+                    </Menu>
+                  ))}
 
-                <Menu key={bet.id}>
-                  <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="outline" height='auto' p='2' textAlign="left">
-                    <Stat textAlign="left">
-                      <StatLabel isTruncated>{bet.reason}</StatLabel>
-                      <StatNumber fontSize="lg">From {bet.bettor_username}</StatNumber>
-                      <StatHelpText>{bet.created_at}</StatHelpText>
+                </SimpleGrid>
+              </AccordionPanel>
+            </AccordionItem>}
 
-                    </Stat>
-                  </MenuButton>
-                  <MenuList>
-                    <MenuItem onClick={e => {
-                      acceptBet(bet.id);
-                      setTimeout(getAndSetBets, 500);
-                    }}>✔️ Accept</MenuItem>
-                    <MenuItem onClick={e => {
-                      declineBet(bet.id);
-                      setTimeout(getAndSetBets, 500);
-                    }}>❌ Decline</MenuItem>
-                  </MenuList>
-                </Menu>
-              ))}
+          {!mediatedBets.length ? <div></div> :
+            <AccordionItem>
+              <h2>
+                <AccordionButton>
+                  <Box flex='1' textAlign='left' >
+                    <Text textAlign="left" p="2">Mediate bets
+                      <Badge ml='1' fontSize='0.8em' colorScheme='orange' variant="subtle">
+                        Resolve as the mediator
+                      </Badge>
+                    </Text>
+                  </Box>
+                  <AccordionIcon />
+                </AccordionButton>
+              </h2>
+              <AccordionPanel>
+                <SimpleGrid
+                  spacing='2'
+                  paddingTop='5'
+                  textAlign='center'
+                  rounded='lg'
+                >
+                  {mediatedBets.map(bet => (
+                    <Menu key={bet.id} >
+                      <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="outline" height='auto' p='2' textAlign="left">
+                        <Stat textAlign="left">
+                          <StatLabel isTruncated>{bet.reason}</StatLabel>
+                          <StatNumber fontSize="lg">Between {bet.bettor_username} & {bet.caller_username}</StatNumber>
+                          <StatHelpText>{bet.created_at.split("T")[0]}</StatHelpText>
 
-            </SimpleGrid>
-          </Box>
-        }
-        {!mediatedBets.length ? <div></div> :
-          <Box boxShadow='md' borderWidth='1px' marginBottom='5' padding='2' borderRadius='lg' alignItems='left'>
-            <Text textAlign="left" p="2">Mediate bets
-              <Badge ml='1' fontSize='0.8em' colorScheme='orange' variant="subtle">
-                Resolve as the mediator
-              </Badge>
-            </Text>
+                        </Stat>
+                      </MenuButton>
+                      <MenuList>
+                        <MenuItem onClick={e => {
+                          resolveConflict(privateKey, true, bet);
+                          setTimeout(getAndSetBets, 500);
+                        }}>🎉 {bet.bettor_username} won</MenuItem>
+                        <MenuItem onClick={e => {
+                          resolveConflict(privateKey, false, bet);
+                          setTimeout(getAndSetBets, 500);
+                        }}>🎉 {bet.caller_username} won</MenuItem>
+                      </MenuList>
+                    </Menu>
+                  ))}
 
-            <SimpleGrid
-              spacing='2'
-              paddingTop='5'
-              textAlign='center'
-              rounded='lg'
-            >
-              {mediatedBets.map(bet => (
+                </SimpleGrid>
+              </AccordionPanel>
+            </AccordionItem>}
 
-                <Menu key={bet.id}>
-                  <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="outline" height='auto' p='2' textAlign="left">
-                    <Stat textAlign="left">
-                      <StatLabel isTruncated>{bet.reason}</StatLabel>
-                      <StatNumber fontSize="lg">Between {bet.bettor_username} & {bet.caller_username}</StatNumber>
-                      <StatHelpText>{bet.created_at.split("T")[0]}</StatHelpText>
+          {!sentBets.length ? <div></div> :
+            <AccordionItem>
+              <h2>
+                <AccordionButton>
+                  <Box flex='1' textAlign='left'>
+                    <Text textAlign="left" p="2">Sent bets
+                      <Badge ml='1' fontSize='0.8em' colorScheme='yellow' variant="subtle">
+                        Waiting to be accepted
+                      </Badge>
+                    </Text>
+                  </Box>
+                  <AccordionIcon />
+                </AccordionButton>
+              </h2>
+              <AccordionPanel>
+                <SimpleGrid
+                  spacing='2'
+                  paddingTop='5'
+                  textAlign='center'
+                  rounded='lg'
+                >
+                  {sentBets.map(bet => (
 
-                    </Stat>
-                  </MenuButton>
-                  <MenuList>
-                    <MenuItem onClick={e => {
-                      resolveConflict(privateKey, true, bet);
-                      setTimeout(getAndSetBets, 500);
-                    }}>🎉 {bet.bettor_username} won</MenuItem>
-                    <MenuItem onClick={e => {
-                      resolveConflict(privateKey, false, bet);
-                      setTimeout(getAndSetBets, 500);
-                    }}>🎉 {bet.caller_username} won</MenuItem>
-                  </MenuList>
-                </Menu>
-              ))}
+                    <Menu key={bet.id}>
+                      <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="outline" height='auto' p='2' textAlign="left">
+                        <Stat textAlign="left">
+                          <StatLabel isTruncated>{bet.reason}</StatLabel>
+                          <StatNumber fontSize="lg">Between {bet.bettor_username} & {bet.caller_username}</StatNumber>
+                          <StatHelpText>{bet.created_at.split("T")[0]}</StatHelpText>
 
-            </SimpleGrid>
-          </Box>
-        }
-        {!sentBets.length ? <div></div> :
-          <Box boxShadow='md' borderWidth='1px' marginBottom='5' padding='2' borderRadius='lg' alignItems='left'>
-            <Text textAlign="left" p="2">Sent bets
-              <Badge ml='1' fontSize='0.8em' colorScheme='yellow' variant="subtle">
-                Waiting to be accepted
-              </Badge>
-            </Text>
+                        </Stat>
+                      </MenuButton>
+                      <MenuList>
+                        <MenuItem onClick={e => {
+                          acceptBet(bet.id);
+                          setTimeout(getAndSetBets, 500);
+                        }}>Cancel</MenuItem>
+                      </MenuList>
+                    </Menu>
+                  ))}
 
-            <SimpleGrid
-              spacing='2'
-              paddingTop='5'
-              textAlign='center'
-              rounded='lg'
-            >
-              {sentBets.map(bet => (
+                </SimpleGrid>
+              </AccordionPanel>
+            </AccordionItem>}
 
-                <Menu key={bet.id}>
-                  <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="outline" height='auto' p='2' textAlign="left">
-                    <Stat textAlign="left">
-                      <StatLabel isTruncated>{bet.reason}</StatLabel>
-                      <StatNumber fontSize="lg">Between {bet.bettor_username} & {bet.caller_username}</StatNumber>
-                      <StatHelpText>{bet.created_at.split("T")[0]}</StatHelpText>
+          {!completedBets.length ? <div></div> :
+            <AccordionItem>
+              <h2>
+                <AccordionButton>
+                  <Box flex='1' textAlign='left'>
+                    <Text textAlign="left" p="2">History
+                    </Text>
+                  </Box>
+                  <AccordionIcon />
+                </AccordionButton>
+              </h2>
+              <AccordionPanel>
+                <SimpleGrid
+                  spacing='2'
+                  paddingTop='5'
+                  textAlign='center'
+                  rounded='lg'
+                >
+                  {completedBets.map(bet => (
 
-                    </Stat>
-                  </MenuButton>
-                  <MenuList>
-                    <MenuItem onClick={e => {
-                      acceptBet(bet.id);
-                      setTimeout(getAndSetBets, 500);
-                    }}>Cancel</MenuItem>
-                  </MenuList>
-                </Menu>
-              ))}
+                    <Menu key={bet.id}>
+                      <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="outline" height='auto' p='2' textAlign="left">
+                        <HStack width="100%">
+                          <div>
+                            <Text fontSize="sm">With {bet.bettor_username === username ? bet.caller_username : bet.bettor_username}</Text>
+                            <Text fontSize="xs">{bet.created_at.split("T")[0]}</Text>
+                          </div>
+                          <Text fontSize="sm" width="100%" textAlign="right">{bet.bettor_state === 1 ? bet.bettor_username === username ? "(won) 🎉" : "(lost) 🙃" : bet.bettor_username === username ? "(lost) 🙃" : "(won) 🎉"}</Text>
+                        </HStack>
+                      </MenuButton>
+                      <MenuList>
+                        <Link to={"/pool/" + bet.id} target="_blank">
+                          <MenuItem icon={<ExternalLinkIcon />}>Open</MenuItem>
+                        </Link>
+                      </MenuList>
+                    </Menu>
 
-            </SimpleGrid>
-          </Box>
-        }
-        {!completedBets.length ? <div></div> :
-          <Box boxShadow='md' borderWidth='1px' marginBottom='5' padding='2' borderRadius='lg' alignItems='left'>
-            <Text textAlign="left" p="2">History
-            </Text>
+                  ))}
 
-            <SimpleGrid
-              spacing='2'
-              paddingTop='5'
-              textAlign='center'
-              rounded='lg'
-            >
-              {completedBets.map(bet => (
+                </SimpleGrid>
+              </AccordionPanel>
+            </AccordionItem>}
+        </Accordion>
 
-                <Menu key={bet.id}>
-                  <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="outline" height='auto' p='2' textAlign="left">
-                    <HStack width="100%">
-                      <div>
-                        <Text fontSize="sm">With {bet.bettor_username === username ? bet.caller_username : bet.bettor_username}</Text>
-                        <Text fontSize="xs">{bet.created_at.split("T")[0]}</Text>
-                      </div>
-                      <Text fontSize="sm" width="100%" textAlign="right">{bet.bettor_state === 1 ? bet.bettor_username === username ? "(won) 🎉" : "(lost) 🙃" : bet.bettor_username === username ? "(lost) 🙃" : "(won) 🎉"}</Text>
-                    </HStack>
-                  </MenuButton>
-                  <MenuList>
-                    <Link to={"/pool/" + bet.id} target="_blank">
-                      <MenuItem icon={<ExternalLinkIcon />}>Open</MenuItem>
-                    </Link>
-                  </MenuList>
-                </Menu>
-
-              ))}
-
-            </SimpleGrid>
-          </Box>
-        }
         <Modal
           isOpen={isOpen}
           onClose={onClose}

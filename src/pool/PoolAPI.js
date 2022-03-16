@@ -140,7 +140,7 @@ export async function transferAllOut(id, toAddress, privateKey) {
     body: signedTx,
   });
 
-  let hash = await processResponse.json();
+  let processJSON = await processResponse.json();
 
-  return { status: processResponse.status, hash: hash };
+  return { status: processResponse.status, hash: processJSON.hash };
 }

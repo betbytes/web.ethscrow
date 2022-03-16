@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, Stat, StatLabel, StatHelpText, Tooltip, Modal, ModalOverlay, HStack, useDisclosure, InputGroup, InputLeftAddon, ModalBody, Input, ModalContent, Skeleton, ModalHeader, ModalCloseButton, useToast, Link, Heading } from "@chakra-ui/react";
+import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, Stat, StatLabel, StatHelpText, Tooltip, Modal, ModalOverlay, HStack, useDisclosure, InputGroup, InputLeftAddon, ModalBody, Input, ModalContent, Skeleton, ModalHeader, ModalCloseButton, useToast, Link, Badge } from "@chakra-ui/react";
 import { ChevronDownIcon, ExternalLinkIcon, MinusIcon, InfoOutlineIcon, CloseIcon, CheckCircleIcon, LockIcon, DownloadIcon, ArrowUpIcon, CheckIcon } from "@chakra-ui/icons";
 import { BetState, createAnswer, createOffer, generateEscrow, handleICEAnswerEvent, handleICECandidateEvent, MessageType, setupP2P, submitMessage, transferAllOut } from './PoolAPI';
 import SubmitState from './SubmitState';
@@ -510,13 +510,13 @@ const Pool = (props) => {
                 </Button>
                 <Text textAlign="center">Or</Text>
                 <InputGroup>
-                  <InputLeftAddon children='0x' fontSize="sm" />
-                  <Input fontSize="sm" placeholder='deposit wallet address' onChange={e => setTransferOutAddress(e.target.value)} />
+                  <Input fontSize="sm" placeholder='Deposit wallet address, 0X...' onChange={e => setTransferOutAddress(e.target.value)} />
                   <InputRightElement width="9rem">
                     <Button h='1.75rem' size='xs' onClick={async e => {
                       let combined = window.generateEscrowPrivateKey(privateThresholdKey, bet.threshold_key);
                       let trans = await transferAllOut(bet.id, transferOutAddress, combined);
                       if (trans.status === 202) {
+                        console.log(trans);
                         setTransactionHash(trans.hash);
                         onWithdrawOpen();
                       } else {
@@ -544,15 +544,15 @@ const Pool = (props) => {
         <Modal isOpen={isWithdrawOpen} onClose={onWithdrawClose}>
           <ModalOverlay />
           <ModalContent>
-            <ModalHeader><CheckIcon color="green" marginRight="15px" />Escrow Wallet Withdrawn</ModalHeader>
+            <ModalHeader> <Badge colorScheme='green'>PROCESSING</Badge> Withdrawal </ModalHeader>
             <ModalCloseButton />
             <ModalBody>
-              <Text>Transaction Hash </Text>
-              <Text>{transactionHash}</Text>
+              <Text fontSize='xs' marginBottom='10px'>{transactionHash}</Text>
               <Button
                 size='xs'
                 width='100%'
                 variant='outline'
+                marginBottom='5px'
                 onClick={() => {
                   navigator.clipboard.writeText(transactionHash);
                   toast({
@@ -565,6 +565,9 @@ const Pool = (props) => {
               >
                 Copy To Clipboard
               </Button>
+              <Link href={`https://ropsten.etherscan.io/tx/${transactionHash}`} isExternal fontSize='sm'>
+                View Progress on Etherscan <ExternalLinkIcon mx='2px' />
+              </Link>
             </ModalBody>
           </ModalContent>
         </Modal>
