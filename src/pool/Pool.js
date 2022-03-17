@@ -107,7 +107,7 @@ const Pool = (props) => {
           setThresholdX(thresh.publicShareX);
           setThresholdY(thresh.publicShareY);
 
-          let address = window.generateEscrowAddress(thresh.publicShareX, thresh.publicShareY, bobX, bobY, thresh.c, thresh.r, thresh.vGx, thresh.vGy);
+          let address = window.generateEscrowAddress(thresh.publicShareX, thresh.publicShareY, bobX, bobY, message.body.c, message.body.r, message.body.vGx, message.body.vGy);
           setAddress(address);
 
           let encryptedShare = window.encrypt(pool.mediator_public_key, thresh.privateShare);
