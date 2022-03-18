@@ -66,7 +66,7 @@ const NewBetDialog = (props) => {
               fontSize='1.2em'
               children='$'
             />
-            <Input variant='filled' placeholder='Enter proposed amount in Eth (Ethereum)' value={amount} onChange={e => setAmount(e.target.value)} />
+            <Input disabled variant='filled' placeholder='COMING SOON - Enter proposed amount in Eth (Ethereum)' value={amount} onChange={e => setAmount(e.target.value)} />
           </InputGroup>
 
           <Textarea variant='filled' placeholder='Enter the reason of the bet here...' value={reason} onChange={e => setReason(e.target.value)} />

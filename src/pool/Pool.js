@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, Stat, StatLabel, StatHelpText, Tooltip, Modal, ModalOverlay, HStack, useDisclosure, InputGroup, InputLeftAddon, ModalBody, Input, ModalContent, Skeleton, ModalHeader, ModalCloseButton, useToast, Link, Badge } from "@chakra-ui/react";
+import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, Stat, StatLabel, StatHelpText, Tooltip, Modal, ModalOverlay, HStack, useDisclosure, InputGroup, InputLeftAddon, ModalBody, Input, ModalContent, Skeleton, ModalHeader, ModalCloseButton, useToast, Link, Badge, Divider } from "@chakra-ui/react";
 import { ChevronDownIcon, ExternalLinkIcon, MinusIcon, InfoOutlineIcon, CloseIcon, CheckCircleIcon, LockIcon, DownloadIcon, ArrowUpIcon, CheckIcon } from "@chakra-ui/icons";
 import { BetState, createAnswer, createOffer, generateEscrow, handleICEAnswerEvent, handleICECandidateEvent, MessageType, setupP2P, submitMessage, transferAllOut } from './PoolAPI';
 import SubmitState from './SubmitState';
+import { RWebShare } from 'react-web-share';
 
 const Pool = (props) => {
 
@@ -236,14 +237,30 @@ const Pool = (props) => {
 
     <Center justifyContent="center" display="flex" alignItems="center">
       <div>
-        <Box boxShadow='md' borderWidth='1px' marginBottom='10' marginTop='10' padding='2' borderRadius='lg' alignItems='center'>
+        <Box boxShadow='md' borderWidth='1px' marginBottom='10' marginTop='10' padding='2' borderRadius='lg' alignItems='center' maxWidth='380px'>
           <SimpleGrid
             columns={2}
-            spacing='8'
+            spacing='2.5'
             textAlign='center'
             rounded='lg'
           >
-            <Text isTruncated maxWidth='200px'>Pool {bet.id}</Text>
+            <RWebShare
+              data={{
+                text: `${username} is inviting to a bet for ${bet.reason}`,
+                url: `${window.location.toString()}`,
+                title: `Bet with ${username} on e(th)scrow`
+              }}
+            >
+
+              <Button
+                size='xs'
+                width='100%'
+                loadingText='Logging in'
+                variant='outline'
+              >
+                Share
+              </Button>
+            </RWebShare>
 
             <Button
               size='xs'
@@ -255,6 +272,10 @@ const Pool = (props) => {
               Exit
             </Button>
           </SimpleGrid>
+          <Divider marginTop={2} marginBottom={2} />
+          <Text fontSize='sm' fontWeight='900' >Pool {bet.id}</Text>
+          <Text noOfLines={[1, 2, 3]} fontSize='sm'>{bet.reason}</Text>
+
         </Box>
 
         <Skeleton isLoaded={loaded}>
@@ -383,11 +404,12 @@ const Pool = (props) => {
             <ModalCloseButton />
             <ModalBody>
               <Text>Transfer To </Text>
-              <Text>{address}</Text>
+              <Text fontSize='sm' as='mark' >{address}</Text>
               <Button
                 size='xs'
                 width='100%'
                 variant='outline'
+                marginTop={3}
                 onClick={() => {
                   navigator.clipboard.writeText(address);
                   toast({
@@ -410,6 +432,7 @@ const Pool = (props) => {
             </Text>
 
             <Box ref={chatBoxRef} borderWidth='1px' p="2" borderTopRadius="lg" maxHeight="150px" overflow="auto">
+              {chats.length === 0 && <Text fontSize='sm' fontWeight='800'>No chats</Text>}
               {chats.map(chat => (
                 <Text key={chat.id} fontSize="sm" textAlign={chat.from_username === username ? "right" : "left"}>
                   {chat.message}
@@ -418,7 +441,7 @@ const Pool = (props) => {
             </Box>
 
             {!completed && <InputGroup>
-              <InputLeftAddon children={`${150 - message.length}`} />
+              <InputLeftAddon fontSize='sm' fontWeight='800' children={`${150 - message.length}`} />
               <Input
                 variant='outline'
                 placeholder='Message'
@@ -575,7 +598,7 @@ const Pool = (props) => {
         <Modal
           isOpen={isSubmitOpen}
           onClose={onSubmitClose}
-        ><SubmitState poolID={bet.id} onClose={onSubmitClose} state={newState} encOtherShare={encOtherShare} privateThresholdKey={privateThresholdKey} ws={ws} />
+        ><SubmitState pool={bet} username={username} onClose={onSubmitClose} state={newState} encOtherShare={encOtherShare} privateThresholdKey={privateThresholdKey} ws={ws} />
         </Modal>
       </div >
     </Center >

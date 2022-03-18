@@ -88,10 +88,16 @@ export async function handleICEAnswerEvent(sdp, p2p) {
   }
 }
 
-export async function submitStateChange(id, state, encOtherShare, privateThresholdKey) {
+export async function submitStateChange(bet, username, state, encOtherShare, privateThresholdKey) {
+  if ((username === bet.better_username && state === BetState.WonState && bet.caller_state === BetState.WonState) ||
+    (username === bet.caller_username && state === BetState.WonState && bet.bettor_state === BetState.WonState)) {
+    state = BetState.ConflictState
+  }
+
   let changedState = {
     new_state: state,
   };
+
 
   if (state === BetState.LostState) {
     changedState.threshold_key = privateThresholdKey;
@@ -100,7 +106,7 @@ export async function submitStateChange(id, state, encOtherShare, privateThresho
     changedState.plain_threshold_key = privateThresholdKey;
   }
 
-  let res = await fetch(API_URL + `/broker/${id}`, {
+  let res = await fetch(API_URL + `/broker/${bet.id}`, {
     method: "POST",
     headers: {
       'Content-Type': 'application/json',
