@@ -55,7 +55,6 @@ const Pool = (props) => {
   const [newState, setNewState] = useState(0)
   const [completed, setCompleted] = useState(false)
   const [transferOutAddress, setTransferOutAddress] = useState("");
-  const [privateKey, setPrivateKey] = useState("");
   const [transactionHash, setTransactionHash] = useState("");
   const [bet, setBet] = useState({});
 
@@ -216,7 +215,6 @@ const Pool = (props) => {
       }
       setCompleted((b.bettor_state === 1 && b.caller_state === -1) || (b.bettor_state === -1 && b.caller_state === 1));
 
-      setPrivateKey(localStorage.getItem(user));
       setUsername(user);
       setChats(b.chats)
       setAddress(b.address || "");
@@ -237,7 +235,7 @@ const Pool = (props) => {
 
     <Center justifyContent="center" display="flex" alignItems="center">
       <div>
-        <Box boxShadow='md' borderWidth='1px' marginBottom='10' marginTop='10' padding='2' borderRadius='lg' alignItems='center' maxWidth='380px'>
+        <Box boxShadow='md' borderWidth='1px' marginBottom='10' marginTop='10' padding='2' borderRadius='lg' alignItems='center'>
           <SimpleGrid
             columns={2}
             spacing='2.5'
@@ -348,7 +346,7 @@ const Pool = (props) => {
                     //await setupP2P(ws, MessageType.Offer, offer);
                   }}
                 >
-                  {address !== "" ? <CheckCircleIcon color="green" fontSize="xl" /> : otherUserConnected ? "Generate escrow wallet" : "Other user needs to be connected"}
+                  {address !== "" ? <CheckCircleIcon color="green" fontSize="xl" /> : otherUserConnected ? "Generate escrow wallet" : `${bet.bettor_username === username ? bet.caller_username : bet.bettor_username} needs to be online`}
                 </Button>
               </InputGroup>
 
@@ -480,7 +478,7 @@ const Pool = (props) => {
                 borderTopRightRadius='0'
                 borderBottomRightRadius='0'
                 width='100%'
-                disabled={state !== BetState.NeutralState}
+                disabled={state !== BetState.NeutralState || address === ""}
                 loadingText='Generating'
                 variant='outline'
                 backgroundColor={state === BetState.WonState ? "green" : "white"}
@@ -496,7 +494,7 @@ const Pool = (props) => {
                 borderTopLeftRadius='0'
                 borderBottomLeftRadius='0'
                 width='100%'
-                disabled={state !== BetState.NeutralState}
+                disabled={state !== BetState.NeutralState || address === ""}
                 loadingText='Generating'
                 variant='outline'
                 backgroundColor={state === BetState.LostState ? "red" : "white"}
