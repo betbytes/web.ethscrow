@@ -1,7 +1,6 @@
+import { Center, Spinner, Text } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, MenuButton, MenuItem, MenuList, Alert, AlertIcon, CloseButton, Badge, InputGroup, InputLeftAddon, Input, InputRightAddon, Spinner } from "@chakra-ui/react";
-import { ChevronDownIcon, ExternalLinkIcon, MinusIcon, InfoOutlineIcon, CloseIcon, CheckCircleIcon } from "@chakra-ui/icons";
+import { useParams } from 'react-router-dom';
 import { API_URL } from '../utils/constants';
 import { Pool } from "./Pool";
 

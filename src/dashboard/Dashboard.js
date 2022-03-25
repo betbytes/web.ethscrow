@@ -1,7 +1,7 @@
+import { ChevronDownIcon, ExternalLinkIcon, LockIcon } from "@chakra-ui/icons";
+import { Accordion, AccordionButton, AccordionIcon, AccordionItem, AccordionPanel, Badge, Box, Button, Center, HStack, Menu, MenuButton, MenuItem, MenuList, Modal, SimpleGrid, Skeleton, Stack, Stat, StatHelpText, StatLabel, StatNumber, Text, useDisclosure } from "@chakra-ui/react";
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { StatNumber, Box, Text, Button, Center, SimpleGrid, Menu, MenuButton, MenuItem, MenuList, Stat, StatLabel, StatHelpText, Badge, useDisclosure, Modal, Stack, Skeleton, AccordionIcon, HStack, Accordion, AccordionItem, AccordionButton, AccordionPanel } from "@chakra-ui/react";
-import { ChevronDownIcon, ExternalLinkIcon, LockIcon, UnlockIcon, InfoOutlineIcon, CloseIcon } from "@chakra-ui/icons";
 import { API_URL } from "../utils/constants";
 import { acceptBet, declineBet, getBets, resolveConflict } from './DashboardAPI';
 import NewBetDialog from './NewBetDialog';
@@ -377,3 +377,4 @@ const Dashboard = () => {
 }
 
 export { Dashboard };
+

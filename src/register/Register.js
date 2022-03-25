@@ -1,9 +1,9 @@
-import { AddIcon, DownloadIcon, InfoIcon } from "@chakra-ui/icons";
-import { FormControl, Box, Input, Button, Center, Heading, Tabs, Tab, TabList, TabPanels, TabPanel, Alert } from "@chakra-ui/react";
-import { useState, useEffect } from "react";
+import { InfoIcon } from "@chakra-ui/icons";
+import { Alert, Box, Button, Center, FormControl, Input, Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react";
+import { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import './Register.css';
 import { register } from "./RegisterAPI";
-import { useNavigate } from 'react-router-dom';
 
 
 const Register = () => {

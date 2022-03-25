@@ -1,10 +1,10 @@
-import { useEffect, useState, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { StatNumber, Box, Text, Button, Center, SimpleGrid, InputRightElement, Stat, StatLabel, StatHelpText, Tooltip, Modal, ModalOverlay, HStack, useDisclosure, InputGroup, InputLeftAddon, ModalBody, Input, ModalContent, Skeleton, ModalHeader, ModalCloseButton, useToast, Link, Badge, Divider } from "@chakra-ui/react";
-import { ChevronDownIcon, ExternalLinkIcon, MinusIcon, InfoOutlineIcon, CloseIcon, CheckCircleIcon, LockIcon, DownloadIcon, ArrowUpIcon, CheckIcon } from "@chakra-ui/icons";
-import { BetState, createAnswer, createOffer, generateEscrow, handleICEAnswerEvent, handleICECandidateEvent, MessageType, setupP2P, submitMessage, transferAllOut } from './PoolAPI';
-import SubmitState from './SubmitState';
+import { CheckCircleIcon, CheckIcon, DownloadIcon, ExternalLinkIcon, LockIcon } from "@chakra-ui/icons";
+import { Badge, Box, Button, Center, Divider, HStack, Input, InputGroup, InputLeftAddon, InputRightElement, Link, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, SimpleGrid, Skeleton, Stat, StatHelpText, StatLabel, StatNumber, Text, Tooltip, useDisclosure, useToast } from "@chakra-ui/react";
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { RWebShare } from 'react-web-share';
+import { BetState, createAnswer, handleICEAnswerEvent, handleICECandidateEvent, MessageType, setupP2P, submitMessage, transferAllOut } from './PoolAPI';
+import SubmitState from './SubmitState';
 
 const Pool = (props) => {
 

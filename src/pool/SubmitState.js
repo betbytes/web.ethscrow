@@ -1,8 +1,5 @@
-import { Modal, ModalOverlay, ModalContent, Button, ModalHeader, ModalCloseButton, Stack, Text, Alert, InputLeftElement, ModalFooter, Textarea } from "@chakra-ui/react";
-import { useState } from "react";
+import { Button, ModalContent, ModalHeader, ModalOverlay, Stack, Text, useToast } from "@chakra-ui/react";
 import "../App.css";
-import { API_URL } from "../utils/constants";
-import { useToast } from '@chakra-ui/react'
 import { BetState, submitStateChange } from "./PoolAPI";
 
 const SubmitState = (props) => {

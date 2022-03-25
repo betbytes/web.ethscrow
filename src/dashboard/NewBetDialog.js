@@ -1,8 +1,7 @@
-import { Modal, ModalOverlay, ModalContent, Button, ModalHeader, ModalCloseButton, Stack, InputGroup, Input, InputLeftElement, ModalFooter, Textarea } from "@chakra-ui/react";
+import { Button, Input, InputGroup, InputLeftElement, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Stack, Textarea, useToast } from "@chakra-ui/react";
 import { useState } from "react";
 import "../App.css";
 import { API_URL } from "../utils/constants";
-import { useToast } from '@chakra-ui/react'
 
 const NewBetDialog = (props) => {
   const [betWith, setBetWith] = useState("");

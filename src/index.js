@@ -1,10 +1,10 @@
+import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
 import { BrowserRouter } from 'react-router-dom';
-import { ChakraProvider, extendTheme } from '@chakra-ui/react'
+import App from './App';
+import './index.css';
+import reportWebVitals from './reportWebVitals';
 
 const theme = extendTheme({
   styles: {

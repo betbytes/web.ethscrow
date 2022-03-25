@@ -1,13 +1,12 @@
-import './App.css';
-import { Register } from './register';
-import { Routes, Route } from 'react-router-dom';
-import { Login } from './login';
-import { Dashboard } from './dashboard/Dashboard';
-import { useEffect, useState } from 'react';
-import { Pool } from './pool';
-import { useDisclosure, Image, Link, Text, Heading, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, List, ListItem, ListIcon, Progress, Center, Box } from '@chakra-ui/react';
-import PoolState from './pool/PoolState';
 import { CheckCircleIcon } from "@chakra-ui/icons";
+import { Box, Center, Heading, Image, Link, List, ListIcon, ListItem, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Progress, Text, useDisclosure } from '@chakra-ui/react';
+import { useEffect, useState } from 'react';
+import { Route, Routes } from 'react-router-dom';
+import './App.css';
+import { Dashboard } from './dashboard/Dashboard';
+import { Login } from './login';
+import PoolState from './pool/PoolState';
+import { Register } from './register';
 import { API_URL } from "./utils/constants";
 
 function App() {
