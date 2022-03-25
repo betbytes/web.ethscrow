@@ -24,8 +24,6 @@ export async function acceptBet(id) {
     withCredentials: true,
   });
 
-  let json = await res.json();
-
   return { status: res.status };
 }
 
@@ -38,8 +36,6 @@ export async function declineBet(id) {
     credentials: 'include',
     withCredentials: true,
   });
-
-  let json = await res.json();
 
   return { status: res.status };
 }
@@ -66,8 +62,6 @@ export async function resolveConflict(privateKey, bettorWon, bet) {
       winner_username: bettorWon ? bet.bettor_username : bet.caller_username,
     }),
   });
-
-  let json = await res.json();
 
   return { status: res.status };
 }

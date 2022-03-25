@@ -33,7 +33,7 @@ function App() {
   useEffect(() => {
     pingServer();
     const run = async () => {
-      let { instance, module } = await WebAssembly.instantiateStreaming(fetch("/wasm/ethscrow.wasm"), window.go.importObject)
+      let { instance } = await WebAssembly.instantiateStreaming(fetch("/wasm/ethscrow.wasm"), window.go.importObject)
       await window.go.run(instance)
       // saving to state.. tsk tsk not sure its the most optimal but i guess it works?? also, the value isnt that "big" anyway
     }

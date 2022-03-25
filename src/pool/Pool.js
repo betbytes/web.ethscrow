@@ -3,25 +3,25 @@ import { Badge, Box, Button, Center, Divider, HStack, Input, InputGroup, InputLe
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RWebShare } from 'react-web-share';
-import { BetState, createAnswer, handleICEAnswerEvent, handleICECandidateEvent, MessageType, setupP2P, submitMessage, transferAllOut } from './PoolAPI';
+import { BetState, MessageType, submitMessage, transferAllOut } from './PoolAPI';
 import SubmitState from './SubmitState';
 
 const Pool = (props) => {
 
-  const p2p = new RTCPeerConnection({
-    iceServers: [     // Information about ICE servers - Use your own!
-      {
-        urls: "stun:stun.l.google.com:19302"
-      }
-    ],
-  });
-  const p2pChannel = p2p.createDataChannel("escrowChannel");
-  p2pChannel.onopen = e => {
-    console.log(e);
-  }
-  p2pChannel.onmessage = function (event) {
-    console.log(event);
-  };
+  // const p2p = new RTCPeerConnection({
+  //   iceServers: [     // Information about ICE servers - Use your own!
+  //     {
+  //       urls: "stun:stun.l.google.com:19302"
+  //     }
+  //   ],
+  // });
+  // const p2pChannel = p2p.createDataChannel("escrowChannel");
+  // p2pChannel.onopen = e => {
+  //   console.log(e);
+  // }
+  // p2pChannel.onmessage = function (event) {
+  //   console.log(event);
+  // };
 
   const toast = useToast({
     position: 'top',
@@ -38,8 +38,8 @@ const Pool = (props) => {
   const [message, setMessage] = useState("");
   const [generatingEscrow, setGeneratingEscrow] = useState(false);
   const [initiatedEscrow, setInitiatedEscrow] = useState(false);
-  const [iceSet, setIceSet] = useState(false);
-  p2p.onicecandidate = e => handleICECandidateEvent(e, ws);
+  //const [iceSet, setIceSet] = useState(false);
+  //p2p.onicecandidate = e => handleICECandidateEvent(e, ws);
   const [privateThresholdKey, setPrivateThresholdKey] = useState("");
   const [encOtherShare, setEncOtherShare] = useState("")
   const [thresholdX, setThresholdX] = useState("");
@@ -134,18 +134,18 @@ const Pool = (props) => {
         localStorage.setItem(`other-${address}`, encOtherShare);
         onOpen();
         break;
-      case MessageType.Offer:
-        setGeneratingEscrow(true);
-        let answer = await createAnswer(p2p, message.body.data, false);
-        await setupP2P(ws, MessageType.Answer, answer);
-        break;
-      case MessageType.Answer:
-        await createAnswer(p2p, message.body.data, true);
-        break;
-      case MessageType.OfferCandidate:
-      case MessageType.AnswerCandidate:
-        await handleICEAnswerEvent(message.body.data, p2p);
-        break;
+      // case MessageType.Offer:
+      //   setGeneratingEscrow(true);
+      //   let answer = await createAnswer(p2p, message.body.data, false);
+      //   await setupP2P(ws, MessageType.Answer, answer);
+      //   break;
+      // case MessageType.Answer:
+      //   await createAnswer(p2p, message.body.data, true);
+      //   break;
+      // case MessageType.OfferCandidate:
+      // case MessageType.AnswerCandidate:
+      //   await handleICEAnswerEvent(message.body.data, p2p);
+      //   break;
       case MessageType.RefreshBalance:
         setBalance((message.body.balance / 1000000000000000000).toFixed(8))
         setBalanceUpdatedAt(new Date(message.body.updated_at));
@@ -227,7 +227,7 @@ const Pool = (props) => {
       }
       setLoaded(true);
     }
-  }, [])
+  }, [navigate, pool, ws]);
 
 
 
@@ -604,3 +604,4 @@ const Pool = (props) => {
 };
 
 export { Pool };
+

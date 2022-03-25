@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "E(th)scrow",
+  "name": "e(th)scrow - Trustless Betting With Friends",
   "icons": [
     {
       "src": "favicon.ico",

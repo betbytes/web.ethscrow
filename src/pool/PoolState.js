@@ -18,7 +18,7 @@ const PoolState = () => {
     ws.current.onopen = () => setIsActiveBet(true);
     ws.current.onmessage = (msg) => setPool(JSON.parse(msg.data).body);
 
-  }, []);
+  }, [PoolId]);
 
   return (
     <div>

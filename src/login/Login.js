@@ -8,7 +8,7 @@ const Login = () => {
   const [privateKey, setPrivateKey] = useState("");
   const [encPrivateKey, setEncPrivateKey] = useState("");
 
-  const [error, setError] = useState(false);
+  //const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
@@ -59,7 +59,7 @@ const Login = () => {
           duration: 2000,
           isClosable: true,
         });
-        setError(true);
+        //setError(true);
         setIsLoading(false);
         break;
 
@@ -70,7 +70,7 @@ const Login = () => {
           duration: 2000,
           isClosable: true,
         });
-        setError(true);
+        //setError(true);
         setIsLoading(false);
         break;
     }
@@ -123,7 +123,7 @@ const Login = () => {
                   borderRadius='0'
                   accept=".key"
                   onChange={onKeyUpload}
-                  disabled={privateKey != ""}
+                  disabled={privateKey !== ""}
                 />
               </InputGroup>
 

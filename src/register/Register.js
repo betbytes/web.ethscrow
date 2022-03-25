@@ -94,7 +94,7 @@ const Register = () => {
                       size='sm'
                       variant='outline'
                       width='100%'
-                      disabled={publicKey != "" || username == ""}
+                      disabled={publicKey !== "" || username === ""}
                       onClick={generateKey}
                     >Generate and Download Backup</Button>
                   </TabPanel>

@@ -30,7 +30,7 @@ const Dashboard = () => {
       setPrivateKey(localStorage.getItem(user));
       getAndSetBets();
     }
-  }, []);
+  }, [navigate]);
 
   const getAndSetBets = async () => {
     let bets = await getBets();
