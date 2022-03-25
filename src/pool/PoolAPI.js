@@ -89,7 +89,7 @@ export async function handleICEAnswerEvent(sdp, p2p) {
 }
 
 export async function submitStateChange(bet, username, state, encOtherShare, privateThresholdKey) {
-  if ((username === bet.better_username && state === BetState.WonState && bet.caller_state === BetState.WonState) ||
+  if ((username === bet.bettor_username && state === BetState.WonState && bet.caller_state === BetState.WonState) ||
     (username === bet.caller_username && state === BetState.WonState && bet.bettor_state === BetState.WonState)) {
     state = BetState.ConflictState
   }
