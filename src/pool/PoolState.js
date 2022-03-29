@@ -13,9 +13,10 @@ const PoolState = () => {
   const ws = useRef(null);
 
   useEffect(() => {
-    ws.current = new WebSocket("ws://" + API_URL.substring(7) + "/broker/" + PoolId);
+    ws.current = new WebSocket("wss://" + API_URL.substring(8) + "/broker/" + PoolId);
     ws.current.onclose = () => setLoading(false);
     ws.current.onopen = () => setIsActiveBet(true);
+    ws.current.onerror = (e) => console.log(e);
     ws.current.onmessage = (msg) => setPool(JSON.parse(msg.data).body);
 
   }, [PoolId]);
